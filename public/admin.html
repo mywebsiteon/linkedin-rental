@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - LinkedRent</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">in</span>
+        LinkedRent
+      </a>
+      <div class="nav-links">
+        <span style="color: var(--text-medium);">Admin Dashboard</span>
+        <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Total Accounts</div>
+        <div class="stat-value" id="totalAccounts">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value" id="pendingAccounts">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Rentals</div>
+        <div class="stat-value" id="activeRentals">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value" id="totalRevenue">$0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Accounts Submitted by Clients</h2>
+        <button class="btn btn-outline btn-small" onclick="loadAccounts()">Refresh</button>
+      </div>
+      <div class="table-container">
+        <table class="table" id="accountsTable">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Account Name</th>
+              <th>Email</th>
+              <th>Price</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Rental Period</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Weekly Rentals</h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Chat with Clients</h2>
+      </div>
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-header-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <div class="chat-header-info">
+            <h3>Support Chat</h3>
+            <span>Online</span>
+          </div>
+        </div>
+        <div class="chat-messages" id="adminChat"></div>
+        <div class="chat-input-container">
+          <input type="text" id="adminInput" class="chat-input" placeholder="Type your message...">
+          <button id="adminSend" class="chat-send-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const role = localStorage.getItem('role');
+    if (role !== 'admin') {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    const socket = io();
+
+    async function loadAccounts() {
+      const res = await fetch('/admin/accounts?role=admin', {
+        headers: { 'x-role': role }
+      });
+      const accounts = await res.json();
+      
+      document.getElementById('totalAccounts').textContent = accounts.length;
+      document.getElementById('pendingAccounts').textContent = accounts.filter(a => a.status === 'pending').length;
+      document.getElementById('activeRentals').textContent = accounts.filter(a => a.status === 'rented').length;
+      
+      const revenue = accounts.reduce((sum, a) => sum + (a.status === 'rented' ? a.price : 0), 0);
+      document.getElementById('totalRevenue').textContent = '$' + revenue;
+
+      const tbody = document.querySelector('#accountsTable tbody');
+      tbody.innerHTML = accounts.map(a => `
+        <tr>
+          <td>${a.userId ? a.userId.name : 'Unknown'}</td>
+          <td>${a.accountName}</td>
+          <td>${a.email}</td>
+          <td>$${a.price}</td>
+          <td>${a.description || '-'}</td>
+          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+          <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'} to ${a.rentalEnd ? new Date(a.rentalEnd).toLocaleDateString() : '-'}</td>
+          <td class="table-actions">
+            ${a.status === 'pending' ? `
+              <button class="btn btn-success btn-small" onclick="updateAccountStatus('${a._id}', 'approve')">Approve</button>
+              <button class="btn btn-danger btn-small" onclick="updateAccountStatus('${a._id}', 'reject')">Reject</button>
+            ` : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function updateAccountStatus(accountId, action) {
+      const res = await fetch('/admin/approve-account?role=admin', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-role': role
+        },
+        body: JSON.stringify({ accountId, action })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadAccounts();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    loadAccounts();
+    setInterval(loadAccounts, 5000);
+
+    fetch('/admin/chart-data?role=admin', {
+      headers: { 'x-role': role }
+    }).then(res => res.json()).then(data => {
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          datasets: [{
+            label: 'Weekly Rentals',
+            data: data,
+            borderColor: '#0a66c2',
+            backgroundColor: 'rgba(10, 102, 194, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    });
+
+    const adminChat = document.getElementById('adminChat');
+
+    function addAdminMessage(sender, text) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      adminChat.innerHTML += `
+        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
+          <div class="chat-bubble">${text}</div>
+          <div class="chat-meta">
+            <span class="time">${time}</span>
+            <span>${sender}</span>
+          </div>
+        </div>
+      `;
+      adminChat.scrollTop = adminChat.scrollHeight;
+    }
+
+    document.getElementById('adminSend').addEventListener('click', () => {
+      const message = document.getElementById('adminInput').value.trim();
+      if (!message) return;
+      const msgObj = { sender: 'admin', receiver: 'client', text: message };
+      socket.emit('sendMessage', msgObj);
+      addAdminMessage('You', message);
+      document.getElementById('adminInput').value = '';
+    });
+
+    socket.on('receiveMessage', msg => {
+      if (msg.sender === 'client') addAdminMessage('Client', msg.text);
+    });
+  </script>
+</body>
+</html>

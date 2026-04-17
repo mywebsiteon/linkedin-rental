@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedRent - Professional LinkedIn Account Rental Platform</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+      color: white;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: white;
+    }
+    .hero p {
+      font-size: 20px;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+    .hero .btn {
+      padding: 16px 32px;
+    }
+    .features {
+      padding: 60px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      margin-top: 40px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+    .feature-card h3 {
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      color: var(--text-medium);
+    }
+    .cta {
+      background: var(--primary-light);
+      padding: 60px 24px;
+      text-align: center;
+    }
+    .cta h2 {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">in</span>
+        LinkedRent
+      </a>
+      <div class="nav-links">
+        <a href="login.html" class="nav-link">Login</a>
+        <a href="register.html" class="btn btn-primary">Get Started</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h1>LinkedIn Account Rental Platform</h1>
+    <p>Connect with professionals, expand your network, and grow your business with verified LinkedIn accounts available for rent.</p>
+    <div class="hero-buttons">
+      <a href="register.html" class="btn btn-primary">Start Renting</a>
+      <a href="login.html" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: none;">Partner With Us</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 style="text-align: center;">Why Choose LinkedRent?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Verified Accounts</h3>
+        <p>All LinkedIn accounts are verified and approved to ensure authenticity and quality.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">$</div>
+        <h3>Flexible Pricing</h3>
+        <p>Choose from daily, weekly, or monthly rental plans that fit your budget and needs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Access</h3>
+        <p>Get immediate access to rented accounts once approved by our system.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Secure Platform</h3>
+        <p>Your data and credentials are protected with enterprise-grade security.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Direct Support</h3>
+        <p>Chat directly with our team for any questions or assistance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Analytics Dashboard</h3>
+        <p>Track your rentals and monitor account performance in real-time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Ready to Get Started?</h2>
+    <p style="margin-bottom: 24px; color: var(--text-medium);">Join thousands of professionals growing their network today.</p>
+    <a href="register.html" class="btn btn-primary">Create Free Account</a>
+  </section>
+
+  <footer style="background: #191919; color: white; padding: 40px 24px; text-align: center;">
+    <p style="opacity: 0.7;">&copy; 2026 LinkedRent. All rights reserved.</p>
+  </footer>
+</body>
+</html>

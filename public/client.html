@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard - LinkedRent</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">in</span>
+        LinkedRent
+      </a>
+      <div class="nav-links">
+        <span id="userGreeting">Hello, <span id="userName"></span></span>
+        <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Submit Account for Rent</h2>
+      </div>
+      <form id="accountForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Account Name</label>
+            <input type="text" id="accountName" class="form-input" placeholder="e.g., My Business Account" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Email</label>
+            <input type="email" id="email" class="form-input" placeholder="contact@example.com" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price per Day ($)</label>
+            <input type="number" id="price" class="form-input" placeholder="25" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rental Days</label>
+            <input type="number" id="rentalDays" class="form-input" placeholder="30" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="description" class="form-textarea" placeholder="Describe your account, its connections, industry focus..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Account</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">My Submitted Accounts</h2>
+        <button class="btn btn-outline btn-small" onclick="loadMyAccounts()">Refresh</button>
+      </div>
+      <div class="table-container">
+        <table class="table" id="myAccountsTable">
+          <thead>
+            <tr>
+              <th>Account Name</th>
+              <th>Email</th>
+              <th>Price</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Rental Period</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Available Accounts for Rent</h2>
+        <button class="btn btn-outline btn-small" onclick="loadAvailableAccounts()">Refresh</button>
+      </div>
+      <div class="table-container">
+        <table class="table" id="availableAccountsTable">
+          <thead>
+            <tr>
+              <th>Account Name</th>
+              <th>Owner</th>
+              <th>Price/Day</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Chat with Admin</h2>
+      </div>
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-header-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+          </div>
+          <div class="chat-header-info">
+            <h3>Admin Support</h3>
+            <span>Online</span>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-container">
+          <input type="text" id="messageInput" class="chat-input" placeholder="Type your message...">
+          <button id="sendMessage" class="chat-send-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) window.location.href = 'login.html';
+
+    document.getElementById('userName').textContent = localStorage.getItem('name') || 'User';
+
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    document.getElementById('accountForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await fetch('/submit-account', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': userId
+        },
+        body: JSON.stringify({
+          accountName: document.getElementById('accountName').value,
+          email: document.getElementById('email').value,
+          price: document.getElementById('price').value,
+          rentalDays: document.getElementById('rentalDays').value,
+          description: document.getElementById('description').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Account submitted successfully!');
+        document.getElementById('accountForm').reset();
+        loadMyAccounts();
+      } else {
+        alert(data.message);
+      }
+    });
+
+    async function loadMyAccounts() {
+      const res = await fetch(`/client/my-accounts?userId=${userId}`);
+      const accounts = await res.json();
+      const tbody = document.querySelector('#myAccountsTable tbody');
+      tbody.innerHTML = accounts.map(a => `
+        <tr>
+          <td>${a.accountName}</td>
+          <td>${a.email}</td>
+          <td>$${a.price}</td>
+          <td>${a.description || '-'}</td>
+          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+          <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'} to ${a.rentalEnd ? new Date(a.rentalEnd).toLocaleDateString() : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadAvailableAccounts() {
+      const res = await fetch('/client/available-accounts');
+      const accounts = await res.json();
+      const tbody = document.querySelector('#availableAccountsTable tbody');
+      tbody.innerHTML = accounts.map(a => `
+        <tr>
+          <td>${a.accountName}</td>
+          <td>${a.userId ? a.userId.name : 'Unknown'}</td>
+          <td>$${a.price}</td>
+          <td>${a.description || '-'}</td>
+          <td><button class="btn btn-primary btn-small" onclick="rentAccount('${a._id}')">Rent</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function rentAccount(accountId) {
+      const res = await fetch('/client/rent-account', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': userId
+        },
+        body: JSON.stringify({ accountId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Account rented successfully!');
+        loadAvailableAccounts();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    loadMyAccounts();
+    loadAvailableAccounts();
+
+    const socket = io();
+    const chatMessages = document.getElementById('chatMessages');
+
+    function addMessage(sender, text) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      chatMessages.innerHTML += `
+        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
+          <div class="chat-bubble">${text}</div>
+          <div class="chat-meta">
+            <span class="time">${time}</span>
+            <span>${sender}</span>
+          </div>
+        </div>
+      `;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    document.getElementById('sendMessage').addEventListener('click', () => {
+      const message = document.getElementById('messageInput').value.trim();
+      if (!message) return;
+      const msgObj = { sender: 'client', receiver: 'admin', text: message };
+      socket.emit('sendMessage', msgObj);
+      addMessage('You', message);
+      document.getElementById('messageInput').value = '';
+    });
+
+    socket.on('receiveMessage', msg => {
+      if (msg.sender === 'admin') addMessage('Admin', msg.text);
+    });
+  </script>
+</body>
+</html>
