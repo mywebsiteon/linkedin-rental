@@ -211,17 +211,32 @@
       socket = io();
 
       socket.on('receiveMessage', msg => {
+        console.log('Client received message:', msg);
         if (msg.sender === 'admin') addMessage('Admin', msg.text);
       });
 
-      document.getElementById('sendMessage').addEventListener('click', () => {
+      socket.on('connect', () => {
+        console.log('Client socket connected');
+      });
+
+      socket.on('connect_error', (err) => {
+        console.error('Client socket connection error:', err);
+      });
+
+      document.getElementById('sendMessage').addEventListener('click', sendMessage);
+      document.getElementById('messageInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      function sendMessage() {
         const message = document.getElementById('messageInput').value.trim();
         if (!message) return;
 
+        console.log('Client sending message:', message);
         socket.emit('sendMessage', { text: message });
         addMessage('You', message);
         document.getElementById('messageInput').value = '';
-      });
+      }
     }
 
     async function initPage() {

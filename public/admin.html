@@ -604,10 +604,19 @@
       socket = io();
 
       socket.on('receiveMessage', msg => {
+        console.log('Admin received message:', msg);
         if (msg.sender === 'client') {
           addAdminMessage('Client', msg.text);
           showNotificationDot();
         }
+      });
+
+      socket.on('connect', () => {
+        console.log('Admin socket connected');
+      });
+
+      socket.on('connect_error', (err) => {
+        console.error('Admin socket connection error:', err);
       });
 
       document.getElementById('adminSend').addEventListener('click', sendMessage);
