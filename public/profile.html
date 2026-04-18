@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - LinkedRent</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo"><span class="logo-icon">in</span>LinkedRent</a>
+      <div class="nav-links">
+        <a href="client.html" class="nav-link">Dashboard</a>
+        <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Profile Settings</h2></div>
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label">Profile Picture</label>
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <img id="avatarPreview" src="" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: var(--primary-light); display: none;">
+            <div id="avatarPlaceholder" style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: white; font-size: 32px; font-weight: 700; display: flex; align-items: center; justify-content: center;" id="avatarInitial"></div>
+            <input type="text" id="profilePicture" class="form-input" placeholder="Enter image URL" style="flex: 1;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" id="name" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-input" disabled style="background: #f5f5f5;">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Login History</h2></div>
+      <div class="table-container">
+        <table class="table" id="loginHistoryTable">
+          <thead><tr><th>Time</th><th>IP Address</th><th>Browser</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="border: 2px solid var(--danger);">
+      <div class="card-header"><h2 class="card-title">Delete Account</h2></div>
+      <p style="color: var(--text-medium); margin-bottom: 16px;">This action cannot be undone. All your data will be permanently deleted.</p>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <input type="password" id="deletePassword" class="form-input" placeholder="Enter password to confirm" style="max-width: 250px;">
+        <button onclick="deleteAccount()" class="btn btn-danger">Delete My Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, { ...options, credentials: 'same-origin', headers: { ...(options.headers || {}) } });
+      if (response.status === 401) { window.location.href = 'login.html'; throw new Error('Auth required'); }
+      return response;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      fetch('/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => window.location.href = 'login.html');
+    });
+
+    async function loadProfile() {
+      const res = await apiFetch('/user/profile');
+      const data = await res.json();
+      if (data.success) {
+        const user = data.user;
+        document.getElementById('name').value = user.name || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('profilePicture').value = user.profilePicture || '';
+        document.getElementById('avatarInitial').textContent = (user.name || 'U')[0].toUpperCase();
+        
+        if (user.profilePicture) {
+          document.getElementById('avatarPreview').src = user.profilePicture;
+          document.getElementById('avatarPreview').style.display = 'block';
+          document.getElementById('avatarPlaceholder').style.display = 'none';
+        }
+
+        const tbody = document.querySelector('#loginHistoryTable tbody');
+        tbody.innerHTML = (user.loginHistory || []).map(h => `
+          <tr>
+            <td>${new Date(h.timestamp).toLocaleString()}</td>
+            <td>${h.ip || '-'}</td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${h.userAgent || '-'}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="3">No login history</td></tr>';
+      }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await apiFetch('/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          profilePicture: document.getElementById('profilePicture').value
+        })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) loadProfile();
+    });
+
+    async function deleteAccount() {
+      const password = document.getElementById('deletePassword').value;
+      if (!password) return alert('Please enter your password');
+      if (!confirm('Are you sure? This cannot be undone!')) return;
+      
+      const res = await apiFetch('/user/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Account deleted');
+        window.location.href = 'login.html';
+      } else {
+        alert(data.message);
+      }
+    }
+
+    document.getElementById('profilePicture').addEventListener('input', e => {
+      const url = e.target.value;
+      if (url) {
+        document.getElementById('avatarPreview').src = url;
+        document.getElementById('avatarPreview').style.display = 'block';
+        document.getElementById('avatarPlaceholder').style.display = 'none';
+      } else {
+        document.getElementById('avatarPreview').style.display = 'none';
+        document.getElementById('avatarPlaceholder').style.display = 'flex';
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

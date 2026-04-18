@@ -6,6 +6,17 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   role: { type: String, enum: ['client','admin'], default:'client' },
+  profilePicture: { type: String, default: '' },
+  isActive: { type: Boolean, default: true },
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorSecret: { type: String, default: '' },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  loginHistory: [{
+    ip: String,
+    userAgent: String,
+    timestamp: { type: Date, default: Date.now }
+  }],
   createdAt: { type: Date, default: Date.now }
 });
 

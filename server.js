@@ -14,7 +14,13 @@ const { connectToMongo } = require('./mongo');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const DOMAIN = process.env.DOMAIN || 'http://localhost:3000';
+const io = socketio(server, {
+  cors: {
+    origin: DOMAIN,
+    methods: ['GET', 'POST']
+  }
+});
 
 const User = require('./models/User');
 const Account = require('./models/Account');
@@ -69,9 +75,19 @@ app.post('/login', async (req, res) => {
 
   const user = await User.findOne({ email });
   if (!user) return res.status(400).send({ success: false, message: 'User not found' });
+  
+  if (!user.isActive) return res.status(400).send({ success: false, message: 'Account is deactivated' });
 
   const valid = await user.verifyPassword(password);
   if (!valid) return res.status(400).send({ success: false, message: 'Invalid password' });
+
+  // Save login history
+  user.loginHistory.unshift({
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.headers['user-agent']
+  });
+  if (user.loginHistory.length > 10) user.loginHistory = user.loginHistory.slice(0, 10);
+  await user.save();
 
   setSessionCookie(res, user, Boolean(remember));
   res.send({ success: true, role: user.role, name: user.name });
@@ -80,6 +96,93 @@ app.post('/login', async (req, res) => {
 app.post('/logout', (req, res) => {
   clearSessionCookie(res);
   res.send({ success: true });
+});
+
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send({ success: false, message: 'Email required' });
+
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+  const user = await User.findOne({ email });
+  
+  if (user) {
+    user.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+    // In production, send email. For now, return token for testing
+    res.send({ success: true, message: 'Reset link sent to email', token });
+  } else {
+    res.send({ success: true, message: 'If email exists, reset link sent' });
+  }
+});
+
+app.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).send({ success: false, message: 'Token and password required' });
+
+  const crypto = require('crypto');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  
+  const user = await User.findOne({
+    resetPasswordToken: tokenHash,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) return res.status(400).send({ success: false, message: 'Invalid or expired token' });
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.send({ success: true, message: 'Password reset successful' });
+});
+
+app.get('/user/profile', requireAuth, async (req, res) => {
+  const user = await User.findById(req.user.id).select('-password -resetPasswordToken');
+  if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+  res.send({ 
+    success: true, 
+    user: { 
+      id: user._id, 
+      name: user.name, 
+      email: user.email, 
+      role: user.role,
+      profilePicture: user.profilePicture,
+      twoFactorEnabled: user.twoFactorEnabled,
+      createdAt: user.createdAt,
+      loginHistory: user.loginHistory.slice(0, 5)
+    } 
+  });
+});
+
+app.post('/user/profile', requireAuth, async (req, res) => {
+  const { name, profilePicture } = req.body;
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+
+  if (name) user.name = name;
+  if (profilePicture !== undefined) user.profilePicture = profilePicture;
+  await user.save();
+
+  res.send({ success: true, message: 'Profile updated' });
+});
+
+app.post('/user/delete-account', requireAuth, async (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).send({ success: false, message: 'Password required' });
+
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+
+  const valid = await user.verifyPassword(password);
+  if (!valid) return res.status(400).send({ success: false, message: 'Invalid password' });
+
+  await User.findByIdAndDelete(req.user.id);
+  await Account.deleteMany({ userId: req.user.id });
+  clearSessionCookie(res);
+  res.send({ success: true, message: 'Account deleted' });
 });
 
 app.get('/me', requireAuth, (req, res) => {
@@ -114,6 +217,29 @@ app.post('/submit-account', requireAuth, async (req, res) => {
   });
   await account.save();
   res.send({ success: true });
+});
+
+app.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
+  const users = await User.find().select('-password -resetPasswordToken').sort({ createdAt: -1 });
+  res.send({ success: true, users });
+});
+
+app.post('/admin/user/:userId/toggle', requireAuth, requireAdmin, async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+  if (user.role === 'admin') return res.status(400).send({ success: false, message: 'Cannot deactivate admin' });
+
+  user.isActive = !user.isActive;
+  await user.save();
+  res.send({ success: true, isActive: user.isActive, message: user.isActive ? 'User activated' : 'User deactivated' });
+});
+
+app.get('/admin/user/:userId/login-history', requireAuth, requireAdmin, async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findById(userId).select('loginHistory name');
+  if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+  res.send({ success: true, loginHistory: user.loginHistory, name: user.name });
 });
 
 app.get('/admin/accounts', requireAuth, requireAdmin, async (req, res) => {
@@ -202,7 +328,7 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('User connected');
+  console.log('User connected:', socket.user.name, socket.user.role);
 
   socket.on('sendMessage', async (msg) => {
     const text = typeof msg?.text === 'string' ? msg.text.trim() : '';
@@ -213,6 +339,8 @@ io.on('connection', (socket) => {
     const message = new Message({ sender, receiver, text });
     await message.save();
 
+    console.log('Message sent:', sender, '->', receiver, text);
+    
     io.emit('receiveMessage', {
       sender,
       receiver,
@@ -220,6 +348,11 @@ io.on('connection', (socket) => {
       timestamp: message.timestamp
     });
   });
+});
+
+app.get('/messages', requireAuth, async (req, res) => {
+  const messages = await Message.find().sort({ timestamp: -1 }).limit(100);
+  res.send({ success: true, messages });
 });
 
 const PORT = process.env.PORT || 3000;
