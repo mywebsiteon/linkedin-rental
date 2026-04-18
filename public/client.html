@@ -79,27 +79,6 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Available Accounts for Rent</h2>
-        <button class="btn btn-outline btn-small" onclick="loadAvailableAccounts()">Refresh</button>
-      </div>
-      <div class="table-container">
-        <table class="table" id="availableAccountsTable">
-          <thead>
-            <tr>
-              <th>Account Name</th>
-              <th>Owner</th>
-              <th>Price/Day</th>
-              <th>Description</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
         <h2 class="card-title">Chat with Admin</h2>
       </div>
       <div class="chat-container">
@@ -228,39 +207,6 @@
       `).join('');
     }
 
-    async function loadAvailableAccounts() {
-      const res = await apiFetch('/client/available-accounts');
-      const accounts = await res.json();
-      const tbody = document.querySelector('#availableAccountsTable tbody');
-      tbody.innerHTML = accounts.map(a => `
-        <tr>
-          <td>${a.accountName}</td>
-          <td>${a.userId ? a.userId.name : 'Unknown'}</td>
-          <td>$${a.price}</td>
-          <td>${a.description || '-'}</td>
-          <td><button class="btn btn-primary btn-small" onclick="rentAccount('${a._id}')">Rent</button></td>
-        </tr>
-      `).join('');
-    }
-
-    async function rentAccount(accountId) {
-      const res = await apiFetch('/client/rent-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ accountId })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        alert('Account rented successfully!');
-        loadAvailableAccounts();
-      } else {
-        alert(data.message);
-      }
-    }
-
     function initSocket() {
       socket = io();
 
@@ -281,7 +227,7 @@
     async function initPage() {
       try {
         await ensureClientSession();
-        await Promise.all([loadMyAccounts(), loadAvailableAccounts()]);
+        await loadMyAccounts();
         initSocket();
       } catch (error) {
         console.error(error);
