@@ -125,24 +125,73 @@
   </div>
 
   <script>
-    const userId = localStorage.getItem('userId');
-    if (!userId) window.location.href = 'login.html';
+    let socket;
 
-    document.getElementById('userName').textContent = localStorage.getItem('name') || 'User';
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        credentials: 'same-origin',
+        headers: {
+          ...(options.headers || {})
+        }
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        throw new Error('Authentication required');
+      }
+
+      if (response.status === 403) {
+        window.location.href = 'admin.html';
+        throw new Error('Client access required');
+      }
+
+      return response;
+    }
 
     document.getElementById('logoutBtn').addEventListener('click', e => {
       e.preventDefault();
-      localStorage.clear();
-      window.location.href = 'login.html';
+      fetch('/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      }).finally(() => {
+        window.location.href = 'login.html';
+      });
     });
+
+    function addMessage(sender, text) {
+      const chatMessages = document.getElementById('chatMessages');
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      chatMessages.innerHTML += `
+        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
+          <div class="chat-bubble">${text}</div>
+          <div class="chat-meta">
+            <span class="time">${time}</span>
+            <span>${sender}</span>
+          </div>
+        </div>
+      `;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function ensureClientSession() {
+      const res = await apiFetch('/me');
+      const data = await res.json();
+
+      if (data.role === 'admin') {
+        window.location.href = 'admin.html';
+        throw new Error('Admin users should use the admin dashboard');
+      }
+
+      document.getElementById('userName').textContent = data.name || 'User';
+    }
 
     document.getElementById('accountForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const res = await fetch('/submit-account', {
+      const res = await apiFetch('/submit-account', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-user-id': userId
+        headers: {
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           accountName: document.getElementById('accountName').value,
@@ -153,6 +202,7 @@
         })
       });
       const data = await res.json();
+
       if (data.success) {
         alert('Account submitted successfully!');
         document.getElementById('accountForm').reset();
@@ -163,7 +213,7 @@
     });
 
     async function loadMyAccounts() {
-      const res = await fetch(`/client/my-accounts?userId=${userId}`);
+      const res = await apiFetch('/client/my-accounts');
       const accounts = await res.json();
       const tbody = document.querySelector('#myAccountsTable tbody');
       tbody.innerHTML = accounts.map(a => `
@@ -179,7 +229,7 @@
     }
 
     async function loadAvailableAccounts() {
-      const res = await fetch('/client/available-accounts');
+      const res = await apiFetch('/client/available-accounts');
       const accounts = await res.json();
       const tbody = document.querySelector('#availableAccountsTable tbody');
       tbody.innerHTML = accounts.map(a => `
@@ -194,15 +244,15 @@
     }
 
     async function rentAccount(accountId) {
-      const res = await fetch('/client/rent-account', {
+      const res = await apiFetch('/client/rent-account', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-user-id': userId
+        headers: {
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ accountId })
       });
       const data = await res.json();
+
       if (data.success) {
         alert('Account rented successfully!');
         loadAvailableAccounts();
@@ -211,38 +261,34 @@
       }
     }
 
-    loadMyAccounts();
-    loadAvailableAccounts();
+    function initSocket() {
+      socket = io();
 
-    const socket = io();
-    const chatMessages = document.getElementById('chatMessages');
+      socket.on('receiveMessage', msg => {
+        if (msg.sender === 'admin') addMessage('Admin', msg.text);
+      });
 
-    function addMessage(sender, text) {
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      chatMessages.innerHTML += `
-        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
-          <div class="chat-bubble">${text}</div>
-          <div class="chat-meta">
-            <span class="time">${time}</span>
-            <span>${sender}</span>
-          </div>
-        </div>
-      `;
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      document.getElementById('sendMessage').addEventListener('click', () => {
+        const message = document.getElementById('messageInput').value.trim();
+        if (!message) return;
+
+        socket.emit('sendMessage', { text: message });
+        addMessage('You', message);
+        document.getElementById('messageInput').value = '';
+      });
     }
 
-    document.getElementById('sendMessage').addEventListener('click', () => {
-      const message = document.getElementById('messageInput').value.trim();
-      if (!message) return;
-      const msgObj = { sender: 'client', receiver: 'admin', text: message };
-      socket.emit('sendMessage', msgObj);
-      addMessage('You', message);
-      document.getElementById('messageInput').value = '';
-    });
+    async function initPage() {
+      try {
+        await ensureClientSession();
+        await Promise.all([loadMyAccounts(), loadAvailableAccounts()]);
+        initSocket();
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
-    socket.on('receiveMessage', msg => {
-      if (msg.sender === 'admin') addMessage('Admin', msg.text);
-    });
+    initPage();
   </script>
 </body>
 </html>

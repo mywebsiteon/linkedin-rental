@@ -102,29 +102,73 @@
   </div>
 
   <script>
-    const role = localStorage.getItem('role');
-    if (role !== 'admin') {
-      window.location.href = 'login.html';
+    const adminChat = document.getElementById('adminChat');
+    let socket;
+
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        credentials: 'same-origin',
+        headers: {
+          ...(options.headers || {})
+        }
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        throw new Error('Authentication required');
+      }
+
+      if (response.status === 403) {
+        window.location.href = 'client.html';
+        throw new Error('Admin access required');
+      }
+
+      return response;
     }
 
     document.getElementById('logoutBtn').addEventListener('click', e => {
       e.preventDefault();
-      localStorage.clear();
-      window.location.href = 'login.html';
+      fetch('/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      }).finally(() => {
+        window.location.href = 'login.html';
+      });
     });
 
-    const socket = io();
+    function addAdminMessage(sender, text) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      adminChat.innerHTML += `
+        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
+          <div class="chat-bubble">${text}</div>
+          <div class="chat-meta">
+            <span class="time">${time}</span>
+            <span>${sender}</span>
+          </div>
+        </div>
+      `;
+      adminChat.scrollTop = adminChat.scrollHeight;
+    }
+
+    async function ensureAdminSession() {
+      const res = await apiFetch('/me');
+      const data = await res.json();
+
+      if (data.role !== 'admin') {
+        window.location.href = 'client.html';
+        throw new Error('Admin access required');
+      }
+    }
 
     async function loadAccounts() {
-      const res = await fetch('/admin/accounts?role=admin', {
-        headers: { 'x-role': role }
-      });
+      const res = await apiFetch('/admin/accounts');
       const accounts = await res.json();
-      
+
       document.getElementById('totalAccounts').textContent = accounts.length;
       document.getElementById('pendingAccounts').textContent = accounts.filter(a => a.status === 'pending').length;
       document.getElementById('activeRentals').textContent = accounts.filter(a => a.status === 'rented').length;
-      
+
       const revenue = accounts.reduce((sum, a) => sum + (a.status === 'rented' ? a.price : 0), 0);
       document.getElementById('totalRevenue').textContent = '$' + revenue;
 
@@ -149,15 +193,13 @@
     }
 
     async function updateAccountStatus(accountId, action) {
-      const res = await fetch('/admin/approve-account?role=admin', {
+      const res = await apiFetch('/admin/approve-account', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-role': role
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accountId, action })
       });
       const data = await res.json();
+
       if (data.success) {
         loadAccounts();
       } else {
@@ -165,13 +207,11 @@
       }
     }
 
-    loadAccounts();
-    setInterval(loadAccounts, 5000);
-
-    fetch('/admin/chart-data?role=admin', {
-      headers: { 'x-role': role }
-    }).then(res => res.json()).then(data => {
+    async function loadChart() {
+      const res = await apiFetch('/admin/chart-data');
+      const data = await res.json();
       const ctx = document.getElementById('weeklyChart').getContext('2d');
+
       new Chart(ctx, {
         type: 'line',
         data: {
@@ -199,36 +239,38 @@
           }
         }
       });
-    });
-
-    const adminChat = document.getElementById('adminChat');
-
-    function addAdminMessage(sender, text) {
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      adminChat.innerHTML += `
-        <div class="chat-message ${sender === 'You' ? 'sent' : 'received'}">
-          <div class="chat-bubble">${text}</div>
-          <div class="chat-meta">
-            <span class="time">${time}</span>
-            <span>${sender}</span>
-          </div>
-        </div>
-      `;
-      adminChat.scrollTop = adminChat.scrollHeight;
     }
 
-    document.getElementById('adminSend').addEventListener('click', () => {
-      const message = document.getElementById('adminInput').value.trim();
-      if (!message) return;
-      const msgObj = { sender: 'admin', receiver: 'client', text: message };
-      socket.emit('sendMessage', msgObj);
-      addAdminMessage('You', message);
-      document.getElementById('adminInput').value = '';
-    });
+    function initSocket() {
+      socket = io();
 
-    socket.on('receiveMessage', msg => {
-      if (msg.sender === 'client') addAdminMessage('Client', msg.text);
-    });
+      socket.on('receiveMessage', msg => {
+        if (msg.sender === 'client') addAdminMessage('Client', msg.text);
+      });
+
+      document.getElementById('adminSend').addEventListener('click', () => {
+        const message = document.getElementById('adminInput').value.trim();
+        if (!message) return;
+
+        socket.emit('sendMessage', { text: message });
+        addAdminMessage('You', message);
+        document.getElementById('adminInput').value = '';
+      });
+    }
+
+    async function initPage() {
+      try {
+        await ensureAdminSession();
+        await loadAccounts();
+        await loadChart();
+        initSocket();
+        setInterval(loadAccounts, 5000);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    initPage();
   </script>
 </body>
 </html>

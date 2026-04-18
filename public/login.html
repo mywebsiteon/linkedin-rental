@@ -438,30 +438,36 @@
   </div>
 
   <script>
+    async function redirectIfAuthenticated() {
+      try {
+        const res = await fetch('/me', { credentials: 'same-origin' });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        window.location.href = data.role === 'admin' ? 'admin.html' : 'client.html';
+      } catch {
+        // Keep the user on the login page when no session exists.
+      }
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember').checked;
       const errorAlert = document.getElementById('errorAlert');
 
       try {
         const res = await fetch('/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          credentials: 'same-origin',
+          body: JSON.stringify({ email, password, remember })
         });
         const data = await res.json();
 
         if (data.success) {
-          localStorage.setItem('userId', data.userId);
-          localStorage.setItem('role', data.role);
-          localStorage.setItem('name', data.name);
-          
-          if (data.role === 'admin') {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'client.html';
-          }
+          window.location.href = data.role === 'admin' ? 'admin.html' : 'client.html';
         } else {
           errorAlert.textContent = data.message;
           errorAlert.classList.add('show');
@@ -471,6 +477,8 @@
         errorAlert.classList.add('show');
       }
     });
+
+    redirectIfAuthenticated();
   </script>
 </body>
 </html>
