@@ -1,70 +1,28 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-
-const mongoUri = 'mongodb+srv://admin:Caleb7909*@linkedin.duvndhx.mongodb.net/?appName=linkedin&serverSelectionTimeoutMS=5000';
-
-const UserSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  password: String,
-  role: { type: String, enum: ['client', 'admin'], default: 'client' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
+const User = require('./models/User');
+const Account = require('./models/Account');
+const { connectToMongo } = require('./mongo');
 
 async function createAdmin() {
-  try {
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
-
-    const User = mongoose.model('User', UserSchema);
-
-    const adminExists = await User.findOne({ email: 'admin@linkedrent.com' });
-    if (adminExists) {
-      console.log('Admin user already exists');
-    } else {
-      const admin = new User({
-        name: 'Admin',
-        email: 'admin@linkedrent.com',
-        password: 'admin123',
-        role: 'admin'
-      });
-      await admin.save();
-      console.log('Admin user created successfully');
-      console.log('Email: admin@linkedrent.com');
-      console.log('Password: admin123');
-    }
-
-    await mongoose.disconnect();
-    console.log('Disconnected');
-  } catch (err) {
-    console.error(err);
+  const adminExists = await User.findOne({ email: 'admin@linkedrent.com' });
+  if (adminExists) {
+    console.log('Admin user already exists');
+  } else {
+    const admin = new User({
+      name: 'Admin',
+      email: 'admin@linkedrent.com',
+      password: 'admin123',
+      role: 'admin'
+    });
+    await admin.save();
+    console.log('Admin user created successfully');
+    console.log('Email: admin@linkedrent.com');
+    console.log('Password: admin123');
   }
 }
 
 async function addSampleData() {
-  await mongoose.connect(mongoUri);
-  const User = mongoose.model('User', UserSchema);
-  const AccountSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    renterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    accountName: String,
-    email: String,
-    price: Number,
-    description: String,
-    status: { type: String, enum: ['pending', 'approved', 'rented', 'rejected'], default: 'pending' },
-    rentalStart: Date,
-    rentalEnd: Date,
-    createdAt: { type: Date, default: Date.now }
-  });
-  const Account = mongoose.model('Account', AccountSchema);
-
   const sampleUser = await User.findOne({ email: 'demo@linkedrent.com' });
   if (!sampleUser) {
     const demo = new User({
@@ -87,8 +45,21 @@ async function addSampleData() {
     }
     console.log('Sample data created');
   }
-
-  await mongoose.disconnect();
 }
 
-createAdmin().then(addSampleData);
+async function main() {
+  try {
+    const { uriType } = await connectToMongo();
+    console.log(`Connected to MongoDB using ${uriType} connection`);
+    await createAdmin();
+    await addSampleData();
+  } catch (err) {
+    console.error(err);
+    process.exitCode = 1;
+  } finally {
+    await mongoose.disconnect();
+    console.log('Disconnected');
+  }
+}
+
+main();

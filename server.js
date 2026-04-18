@@ -1,19 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const http = require('http');
 const socketio = require('socket.io');
 const bodyParser = require('body-parser');
-const bcrypt = require('bcrypt');
+const { connectToMongo } = require('./mongo');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
-
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://admin:Caleb7909*@linkedin.duvndhx.mongodb.net/?appName=linkedin';
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB Atlas connected'))
-  .catch(err => console.error(err));
 
 const User = require('./models/User');
 const Account = require('./models/Account');
@@ -158,4 +152,16 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+async function startServer() {
+  try {
+    const { uriType } = await connectToMongo();
+    console.log(`MongoDB Atlas connected using ${uriType} connection`);
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+}
+
+startServer();
