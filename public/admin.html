@@ -9,101 +9,272 @@
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-  <div class="header">
-    <div class="header-inner">
-      <a href="index.html" class="logo">
-        <span class="logo-icon">in</span>
-        LinkedRent
-      </a>
-      <div class="nav-links">
-        <span style="color: var(--text-medium);">Admin Dashboard</span>
-        <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="logo">
+          <span class="logo-icon">in</span>
+          LinkedRent
+        </a>
+        <span class="sidebar-subtitle">Admin Panel</span>
       </div>
-    </div>
-  </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Dashboard
+        </a>
+        <a href="#" class="sidebar-link" onclick="showSection('accounts')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          Accounts
+        </a>
+        <a href="#" class="sidebar-link" onclick="showSection('analytics')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Analytics
+        </a>
+        <a href="#" class="sidebar-link" onclick="showSection('chat')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Messages
+          <span class="sidebar-badge" id="msgBadge" style="display: none;">0</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="sidebar-link logout">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
 
-  <div class="container">
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-card">
-        <div class="stat-label">Total Accounts</div>
-        <div class="stat-value" id="totalAccounts">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Pending Approval</div>
-        <div class="stat-value" id="pendingAccounts">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Active Rentals</div>
-        <div class="stat-value" id="activeRentals">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Revenue</div>
-        <div class="stat-value" id="totalRevenue">$0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Accounts Submitted by Clients</h2>
-        <button class="btn btn-outline btn-small" onclick="loadAccounts()">Refresh</button>
-      </div>
-      <div class="table-container">
-        <table class="table" id="accountsTable">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Account Name</th>
-              <th>Email</th>
-              <th>Price</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Rental Period</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Weekly Rentals</h2>
-      </div>
-      <div class="chart-container">
-        <canvas id="weeklyChart"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Chat with Clients</h2>
-      </div>
-      <div class="chat-container">
-        <div class="chat-header">
-          <div class="chat-header-avatar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="breadcrumb">
+            <span class="breadcrumb-item">Dashboard</span>
+          </nav>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-notifications" onclick="toggleNotifications()">
+            <button class="notification-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span class="notification-dot" id="notifDot" style="display: none;"></span>
+            </button>
+            <div class="notifications-dropdown" id="notifDropdown">
+              <div class="notifications-header">
+                <span>Notifications</span>
+                <button onclick="markAllRead(event)">Mark all read</button>
+              </div>
+              <div class="notifications-list" id="notifList">
+                <div class="notifications-empty">No new notifications</div>
+              </div>
+            </div>
           </div>
-          <div class="chat-header-info">
-            <h3>Support Chat</h3>
-            <span>Online</span>
+          <div class="topbar-user">
+            <div class="user-avatar">A</div>
+            <span class="user-name">Admin</span>
           </div>
         </div>
-        <div class="chat-messages" id="adminChat"></div>
-        <div class="chat-input-container">
-          <input type="text" id="adminInput" class="chat-input" placeholder="Type your message...">
-          <button id="adminSend" class="chat-send-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            Send
-          </button>
-        </div>
+      </header>
+
+      <div class="content">
+        <section class="dashboard-section" id="dashboard">
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-primary">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Total Accounts</div>
+                <div class="stat-value" id="totalAccounts">-</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-warning">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Pending Approval</div>
+                <div class="stat-value" id="pendingAccounts">-</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-success">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Active Rentals</div>
+                <div class="stat-value" id="activeRentals">-</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-revenue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="totalRevenue">$0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="card card-wide">
+              <div class="card-header">
+                <h2 class="card-title">Recent Account Submissions</h2>
+                <button class="btn btn-outline btn-small" onclick="showSection('accounts'); loadAccounts();">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  View All
+                </button>
+              </div>
+              <div class="table-container">
+                <table class="table" id="accountsTable">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th>Account Name</th>
+                      <th>Email</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                      <th>Submitted</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Rental Trends</h2>
+              </div>
+              <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Quick Actions</h2>
+              </div>
+              <div class="quick-actions">
+                <button class="quick-action" onclick="showSection('accounts'); filterPending();">
+                  <div class="quick-action-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <span>Pending Approvals</span>
+                </button>
+                <button class="quick-action" onclick="exportReport()">
+                  <div class="quick-action-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </div>
+                  <span>Export Report</span>
+                </button>
+                <button class="quick-action" onclick="showSection('chat');">
+                  <div class="quick-action-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  </div>
+                  <span>Messages</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-section" id="accountsSection" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">All Account Submissions</h2>
+              <div class="card-actions">
+                <select class="form-select" id="statusFilter" onchange="filterAccounts()">
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rented">Rented</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <button class="btn btn-outline btn-small" onclick="loadAccounts()">Refresh</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="table" id="allAccountsTable">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Account Name</th>
+                    <th>Email</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Rental Period</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-section" id="analyticsSection" style="display: none;">
+          <div class="analytics-grid">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Revenue Overview</h2>
+              </div>
+              <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Status Distribution</h2>
+              </div>
+              <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-section" id="chatSection" style="display: none;">
+          <div class="card chat-card">
+            <div class="card-header">
+              <h2 class="card-title">Support Chat</h2>
+              <span class="online-indicator">
+                <span class="online-dot"></span>
+                Online
+              </span>
+            </div>
+            <div class="chat-container">
+              <div class="chat-header">
+                <div class="chat-header-avatar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="chat-header-info">
+                  <h3>Support Chat</h3>
+                  <span>Online</span>
+                </div>
+              </div>
+              <div class="chat-messages" id="adminChat"></div>
+              <div class="chat-input-container">
+                <input type="text" id="adminInput" class="chat-input" placeholder="Type your message...">
+                <button id="adminSend" class="chat-send-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   </div>
 
-  <script>
+<script>
     const adminChat = document.getElementById('adminChat');
     let socket;
+    let allAccountsData = [];
+    let notifications = [];
 
     async function apiFetch(url, options = {}) {
       const response = await fetch(url, {
@@ -137,6 +308,97 @@
       });
     });
 
+    function showSection(section) {
+      document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+      document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+      
+      const sectionMap = {
+        'dashboard': 'dashboard',
+        'accounts': 'accountsSection',
+        'analytics': 'analyticsSection',
+        'chat': 'chatSection'
+      };
+      
+      const targetId = sectionMap[section];
+      if (targetId) {
+        document.getElementById(targetId).style.display = 'block';
+      }
+      
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        if (link.textContent.toLowerCase().includes(section) || 
+            (section === 'dashboard' && link.textContent.includes('Dashboard')) ||
+            (section === 'accounts' && link.textContent.includes('Accounts')) ||
+            (section === 'analytics' && link.textContent.includes('Analytics')) ||
+            (section === 'chat' && link.textContent.includes('Messages'))) {
+          link.classList.add('active');
+        }
+      });
+
+      if (section === 'analytics') {
+        loadAnalyticsCharts();
+      }
+    }
+
+    function toggleNotifications() {
+      const dropdown = document.getElementById('notifDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    function markAllRead(e) {
+      e.stopPropagation();
+      notifications = [];
+      document.getElementById('notifDot').style.display = 'none';
+      document.getElementById('notifList').innerHTML = '<div class="notifications-empty">No new notifications</div>';
+    }
+
+    function addNotification(text, type) {
+      notifications.unshift({ text, type, time: new Date() });
+      document.getElementById('notifDot').style.display = 'block';
+      
+      const notifList = document.getElementById('notifList');
+      notifList.innerHTML = notifications.map(n => `
+        <div class="notification-item">
+          <span>${n.text}</span>
+          <span class="notification-time">${formatTime(n.time)}</span>
+        </div>
+      `).join('');
+    }
+
+    function formatTime(date) {
+      const now = new Date();
+      const diff = now - date;
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+      return date.toLocaleDateString();
+    }
+
+    function filterPending() {
+      document.getElementById('statusFilter').value = 'pending';
+      filterAccounts();
+      showSection('accounts');
+    }
+
+    function filterAccounts() {
+      const status = document.getElementById('statusFilter').value;
+      const filtered = status ? allAccountsData.filter(a => a.status === status) : allAccountsData;
+      renderAccountsTable(filtered, 'allAccountsTable');
+    }
+
+    function exportReport() {
+      const csv = ['Client,Account Name,Email,Price,Status,Submitted'];
+      allAccountsData.forEach(a => {
+        csv.push(`${a.userId?.name || 'Unknown'},${a.accountName},${a.email},$${a.price},${a.status},${new Date(a.createdAt).toLocaleDateString()}`);
+      });
+      
+      const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'accounts_report.csv';
+      a.click();
+    }
+
     function addAdminMessage(sender, text) {
       const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       adminChat.innerHTML += `
@@ -164,15 +426,38 @@
     async function loadAccounts() {
       const res = await apiFetch('/admin/accounts');
       const accounts = await res.json();
+      allAccountsData = accounts;
 
       document.getElementById('totalAccounts').textContent = accounts.length;
       document.getElementById('pendingAccounts').textContent = accounts.filter(a => a.status === 'pending').length;
       document.getElementById('activeRentals').textContent = accounts.filter(a => a.status === 'rented').length;
 
       const revenue = accounts.reduce((sum, a) => sum + (a.status === 'rented' ? a.price : 0), 0);
-      document.getElementById('totalRevenue').textContent = '$' + revenue;
+      document.getElementById('totalRevenue').textContent = '$' + revenue.toLocaleString();
 
       const tbody = document.querySelector('#accountsTable tbody');
+      tbody.innerHTML = accounts.slice(0, 5).map(a => `
+        <tr>
+          <td>${a.userId ? a.userId.name : 'Unknown'}</td>
+          <td>${a.accountName}</td>
+          <td>${a.email}</td>
+          <td>$${a.price}</td>
+          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+          <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'}</td>
+          <td class="table-actions">
+            ${a.status === 'pending' ? `
+              <button class="btn btn-success btn-small" onclick="updateAccountStatus('${a._id}', 'approve')">Approve</button>
+              <button class="btn btn-danger btn-small" onclick="updateAccountStatus('${a._id}', 'reject')">Reject</button>
+            ` : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderAccountsTable(accounts, tableId) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      if (!tbody) return;
+      
       tbody.innerHTML = accounts.map(a => `
         <tr>
           <td>${a.userId ? a.userId.name : 'Unknown'}</td>
@@ -201,7 +486,11 @@
       const data = await res.json();
 
       if (data.success) {
-        loadAccounts();
+        const account = allAccountsData.find(a => a._id === accountId);
+        if (account) {
+          addNotification(`Account "${account.accountName}" ${action === 'approve' ? 'approved' : 'rejected'}`, action === 'approve' ? 'success' : 'error');
+        }
+        await loadAccounts();
       } else {
         alert(data.message);
       }
@@ -222,11 +511,16 @@
             borderColor: '#0a66c2',
             backgroundColor: 'rgba(10, 102, 194, 0.1)',
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            pointBackgroundColor: '#0a66c2',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: true,
           plugins: {
             legend: {
               display: false
@@ -234,29 +528,115 @@
           },
           scales: {
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
             }
           }
         }
       });
     }
 
+    async function loadAnalyticsCharts() {
+      const revenueCtx = document.getElementById('revenueChart')?.getContext('2d');
+      const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+      
+      if (revenueCtx) {
+        new Chart(revenueCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              label: 'Revenue',
+              data: [1200, 1900, 3000, 2500, 4200, 3800],
+              backgroundColor: 'rgba(10, 102, 194, 0.8)',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+      
+      if (statusCtx) {
+        const statusCounts = {
+          pending: allAccountsData.filter(a => a.status === 'pending').length,
+          approved: allAccountsData.filter(a => a.status === 'approved').length,
+          rented: allAccountsData.filter(a => a.status === 'rented').length,
+          rejected: allAccountsData.filter(a => a.status === 'rejected').length
+        };
+        
+        new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Pending', 'Approved', 'Rented', 'Rejected'],
+            datasets: [{
+              data: [statusCounts.pending, statusCounts.approved, statusCounts.rented, statusCounts.rejected],
+              backgroundColor: ['#cc6600', '#057642', '#0a66c2', '#cc1016'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+    }
+
     function initSocket() {
       socket = io();
 
       socket.on('receiveMessage', msg => {
-        if (msg.sender === 'client') addAdminMessage('Client', msg.text);
+        if (msg.sender === 'client') {
+          addAdminMessage('Client', msg.text);
+          showNotificationDot();
+        }
       });
 
-      document.getElementById('adminSend').addEventListener('click', () => {
-        const message = document.getElementById('adminInput').value.trim();
-        if (!message) return;
-
-        socket.emit('sendMessage', { text: message });
-        addAdminMessage('You', message);
-        document.getElementById('adminInput').value = '';
+      document.getElementById('adminSend').addEventListener('click', sendMessage);
+      document.getElementById('adminInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
       });
     }
+
+    function sendMessage() {
+      const message = document.getElementById('adminInput').value.trim();
+      if (!message) return;
+
+      socket.emit('sendMessage', { text: message });
+      addAdminMessage('You', message);
+      document.getElementById('adminInput').value = '';
+    }
+
+    function showNotificationDot() {
+      document.getElementById('msgBadge').style.display = 'block';
+      const badge = document.getElementById('msgBadge');
+      const current = parseInt(badge.textContent) || 0;
+      badge.textContent = current + 1;
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.topbar-notifications')) {
+        document.getElementById('notifDropdown').classList.remove('show');
+      }
+    });
 
     async function initPage() {
       try {
