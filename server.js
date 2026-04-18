@@ -145,6 +145,21 @@ app.post('/admin/approve-account', requireAuth, requireAdmin, async (req, res) =
   res.send({ success: true });
 });
 
+app.get('/setup-admin', async (req, res) => {
+  const adminExists = await User.findOne({ email: 'admin@linkedrent.com' });
+  if (adminExists) {
+    return res.send({ success: false, message: 'Admin already exists' });
+  }
+  const admin = new User({
+    name: 'Admin',
+    email: 'admin@linkedrent.com',
+    password: 'admin123',
+    role: 'admin'
+  });
+  await admin.save();
+  res.send({ success: true, message: 'Admin created', email: 'admin@linkedrent.com', password: 'admin123' });
+});
+
 app.get('/admin/chart-data', requireAuth, requireAdmin, async (req, res) => {
   const data = [3, 5, 2, 4];
   res.send(data);
