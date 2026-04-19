@@ -36,19 +36,25 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 // CONFIG - Payment Providers
 // ==========================================
 
+// Payment Configuration - Keys from environment only
 const PAYMENT_CONFIG = {
     pesapal: {
-        consumerKey: process.env.PESAPAL_KEY || '8MXJW3oXrSHpMDbKNxaG3XcAhVOdLCj+',
-        consumerSecret: process.env.PESAPAL_SECRET || 'GjY4RLxU2dJFdtQ3xjCImQoPnPQ=',
+        consumerKey: process.env.PESAPAL_KEY || '',
+        consumerSecret: process.env.PESAPAL_SECRET || '',
         baseUrl: process.env.PESAPAL_URL || 'https://demo.pesapal.com',
-        callbackUrl: process.env.PESAPAL_CALLBACK || 'https://eaglewebcommerce.com/payment-callback'
+        callbackUrl: process.env.PESAPAL_CALLBACK || process.env.PESAPAL_URL?.replace('api', 'www') || ''
     },
     coinbase: {
         apiKey: process.env.COINBASE_KEY || '',
         webhookSecret: process.env.COINBASE_WEBHOOK_SECRET || '',
-        callbackUrl: process.env.COINBASE_CALLBACK || 'https://eaglewebcommerce.com/coinbase-callback'
+        callbackUrl: process.env.COINBASE_CALLBACK || ''
     }
 };
+
+// Fail if payment keys not configured
+if (!PAYMENT_CONFIG.pesapal.consumerKey || !PAYMENT_CONFIG.pesapal.consumerSecret) {
+    console.warn('⚠️ WARNING: Pesapal not configured. Add keys to .env file!');
+}
 
 // Package pricing
 const PACKAGES = {
