@@ -8,8 +8,11 @@
     'use strict';
 
     // Configuration
+    const API_BASE = 'https://linkedin-rental-4.onrender.com';
+    
     const CONFIG = {
         STORAGE_KEY: 'eagleweb_data',
+        API_URL: API_BASE + '/api',
         MIN_WITHDRAW: 500,
         CRYPTO_NETWORKS: {
             bnb: 'BEP20',
@@ -169,20 +172,32 @@
 
         showLoading(true);
 
-        // Simulate login
-        setTimeout(() => {
-            state.isLoggedIn = true;
-            state.user = email.split('@')[0];
-            state.balance = 1250.00;
-            state.referralCode = generateId();
-            state.referralCount = 12;
-            state.referralEarnings = 120;
-            saveState();
-
+        // Real API login
+        fetch(CONFIG.API_URL + '/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        })
+        .then(res => res.json())
+        .then(data => {
             showLoading(false);
-            showDashboard();
-            showToast('Welcome back!');
-        }, 1500);
+            if (data.token) {
+                state.isLoggedIn = true;
+                state.user = data.user.name || email.split('@')[0];
+                state.balance = data.user.balance || 0;
+                state.referralCode = data.user.referralCode || generateId();
+                state.token = data.token;
+                saveState();
+                showDashboard();
+                showToast('Welcome back!');
+            } else {
+                showToast(data.error || 'Login failed', 'error');
+            }
+        })
+        .catch(err => {
+            showLoading(false);
+            showToast('Connection error', 'error');
+        });
     }
 
     function handleRegister(e) {
@@ -205,20 +220,39 @@
 
         showLoading(true);
 
-        // Simulate registration
-        setTimeout(() => {
-            state.isLoggedIn = true;
-            state.user = `${document.getElementById('reg-firstname').value} ${document.getElementById('reg-lastname').value}`;
-            state.balance = 0;
-            state.referralCode = generateId();
-            state.referralCount = 0;
-            state.referralEarnings = 0;
-            saveState();
-
+        // Real API registration
+        const firstname = document.getElementById('reg-firstname')?.value || username;
+        const lastname = document.getElementById('reg-lastname')?.value || '';
+        
+        fetch(CONFIG.API_URL + '/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                name: `${firstname} ${lastname}`.trim(), 
+                email, 
+                password 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
             showLoading(false);
-            showDashboard();
-            showToast('Account created successfully!');
-        }, 1500);
+            if (data.token) {
+                state.isLoggedIn = true;
+                state.user = data.user.name || username;
+                state.balance = 0;
+                state.referralCode = data.user.referralCode || generateId();
+                state.token = data.token;
+                saveState();
+                showDashboard();
+                showToast('Account created successfully!');
+            } else {
+                showToast(data.error || 'Registration failed', 'error');
+            }
+        })
+        .catch(err => {
+            showLoading(false);
+            showToast('Connection error', 'error');
+        });
     }
 
     function showDashboard() {
