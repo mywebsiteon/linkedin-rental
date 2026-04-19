@@ -5,6 +5,9 @@
  * Features: JWT Auth, Payments (Pesapal, Coinbase), 2FA, Sessions
  */
 
+// Load dotenv silently (works with Render env vars too)
+try { require('dotenv').config(); } catch (e) { /* Skip - using Render env vars */ }
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,7 +16,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
