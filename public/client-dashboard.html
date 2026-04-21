@@ -5,28 +5,509 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client Dashboard - LinkedRent</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --dash-primary: #0a66c2;
+      --dash-primary-dark: #004182;
+      --dash-primary-light: #eef3f8;
+      --dash-success: #057642;
+      --dash-warning: #cc6600;
+      --dash-danger: #cc1016;
+      --dash-bg: #f5f7f9;
+      --dash-card: #ffffff;
+      --dash-text: #191919;
+      --dash-text-muted: #666666;
+      --dash-border: #e0e0e0;
+      --dash-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 3px 12px rgba(0,0,0,0.08);
+      --dash-radius: 12px;
+    }
+
+    .dashboard-container {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--dash-bg);
+      min-height: 100vh;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background: var(--dash-card);
+      box-shadow: var(--dash-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .dashboard-header .logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dash-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dashboard-header .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--dash-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .user-menu {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-menu button {
+      background: var(--dash-primary);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .user-menu button:hover {
+      background: var(--dash-primary-dark);
+    }
+
+    .settings-menu {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background: var(--dash-card);
+      border: 1px solid var(--dash-border);
+      border-radius: var(--dash-radius);
+      padding: 8px;
+      min-width: 160px;
+      box-shadow: var(--dash-shadow);
+      display: none;
+    }
+
+    .settings-menu button {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 10px 14px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--dash-text);
+    }
+
+    .settings-menu button:hover {
+      background: var(--dash-primary-light);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 20px 32px;
+      background: var(--dash-card);
+      border-bottom: 1px solid var(--dash-border);
+    }
+
+    .nav-tabs button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--dash-text-muted);
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-tabs button:hover {
+      background: var(--dash-primary-light);
+      color: var(--dash-primary);
+    }
+
+    .nav-tabs button.active {
+      background: var(--dash-primary);
+      color: white;
+    }
+
+    .nav-tabs button i {
+      font-size: 16px;
+    }
+
+    .main-panel {
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Analytics Cards */
+    .analytics-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .dash-card {
+      background: var(--dash-card);
+      padding: 24px;
+      border-radius: var(--dash-radius);
+      box-shadow: var(--dash-shadow);
+      border: 1px solid var(--dash-border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .dash-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .dash-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .dash-card-icon.rentals { background: #e8f5e9; color: var(--dash-success); }
+    .dash-card-icon.earnings { background: #fff3e0; color: var(--dash-warning); }
+    .dash-card-icon.pending { background: var(--dash-primary-light); color: var(--dash-primary); }
+    .dash-card-icon.active { background: #fce4ec; color: #c2185b; }
+
+    .dash-card-label {
+      font-size: 13px;
+      color: var(--dash-text-muted);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .dash-card-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--dash-text);
+    }
+
+    /* Cards */
+    .dash-section-card {
+      background: var(--dash-card);
+      border-radius: var(--dash-radius);
+      box-shadow: var(--dash-shadow);
+      border: 1px solid var(--dash-border);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .dash-section-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--dash-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dash-section-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dash-text);
+    }
+
+    .dash-section-body {
+      padding: 24px;
+    }
+
+    /* Form Styles */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--dash-text);
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--dash-border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--dash-primary);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--dash-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--dash-primary-dark);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--dash-border);
+      color: var(--dash-text);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--dash-primary);
+      color: var(--dash-primary);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dash-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #f9fafb;
+      border-bottom: 1px solid var(--dash-border);
+    }
+
+    .table td {
+      padding: 16px;
+      font-size: 14px;
+      color: var(--dash-text);
+      border-bottom: 1px solid var(--dash-border);
+    }
+
+    .table tr:hover {
+      background: #f9fafb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-approved { background: #d4edda; color: #155724; }
+    .status-rented { background: var(--dash-primary-light); color: var(--dash-primary); }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+
+    /* Chat Widget */
+    .chat-widget {
+      display: flex;
+      flex-direction: column;
+      height: 500px;
+      background: var(--dash-card);
+      border-radius: var(--dash-radius);
+      box-shadow: var(--dash-shadow);
+      border: 1px solid var(--dash-border);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, var(--dash-primary) 0%, var(--dash-primary-dark) 100%);
+      color: white;
+      padding: 18px 24px;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+      background: var(--dash-primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.ai {
+      align-self: flex-start;
+      background: white;
+      color: var(--dash-text);
+      border: 1px solid var(--dash-border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-message.admin {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      color: white;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid var(--dash-border);
+      background: white;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 16px 20px;
+      border: none;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .chat-input input:focus {
+      outline: none;
+    }
+
+    .chat-input button {
+      padding: 0 28px;
+      border: none;
+      background: var(--dash-primary);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .chat-input button:hover {
+      background: var(--dash-primary-dark);
+    }
+
+    /* Quick Stats Row */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .analytics-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header { padding: 12px 16px; }
+      .nav-tabs { padding: 12px 16px; flex-wrap: wrap; }
+      .main-panel { padding: 16px; }
+      .analytics-cards { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
   <div class="dashboard-container">
     <!-- Header -->
     <header class="dashboard-header">
-      <div class="logo">LinkedRent</div>
+      <div class="logo">
+        <span class="logo-icon">in</span>
+        LinkedRent
+      </div>
       <div class="user-menu">
-        <button onclick="toggleSettings()">⚙️ Settings</button>
-        <div class="settings-menu" id="settingsMenu" style="display: none;">
-          <button onclick="logout()">Logout</button>
-          <button onclick="toggleTheme()">Toggle Dark Mode</button>
+        <button onclick="toggleSettings()">
+          <i class="fas fa-cog"></i> Settings
+        </button>
+        <div class="settings-menu" id="settingsMenu">
+          <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+          <button onclick="toggleTheme()"><i class="fas fa-moon"></i> Dark Mode</button>
         </div>
       </div>
     </header>
 
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
-      <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
-      <button data-tab="submission" onclick="switchTab('submission')">Submit Account</button>
-      <button data-tab="aiChat" onclick="switchTab('aiChat')">AI Chat</button>
-      <button data-tab="adminChat" onclick="switchTab('adminChat')">Admin Chat</button>
+      <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <i class="fas fa-th-large"></i> Dashboard
+      </button>
+      <button data-tab="submission" onclick="switchTab('submission')">
+        <i class="fas fa-plus-circle"></i> Submit Account
+      </button>
+      <button data-tab="aiChat" onclick="switchTab('aiChat')">
+        <i class="fas fa-robot"></i> AI Chat
+      </button>
+      <button data-tab="adminChat" onclick="switchTab('adminChat')">
+        <i class="fas fa-user-shield"></i> Admin Chat
+      </button>
     </div>
 
     <!-- Main Panel -->
@@ -34,99 +515,127 @@
       <!-- Dashboard Tab -->
       <div id="dashboard-tab">
         <div class="analytics-cards">
-          <div class="dash-card">Total Rentals: <span id="totalRentals">12</span></div>
-          <div class="dash-card">Total Earnings: $<span id="totalEarnings">350</span></div>
-          <div class="dash-card">Pending Approvals: <span id="pendingApprovals">2</span></div>
-          <div class="dash-card">Active Accounts: <span id="activeAccounts">5</span></div>
+          <div class="dash-card">
+            <div class="dash-card-icon rentals"><i class="fas fa-handshake"></i></div>
+            <div class="dash-card-label">Total Rentals</div>
+            <div class="dash-card-value" id="totalRentals">0</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon earnings"><i class="fas fa-dollar-sign"></i></div>
+            <div class="dash-card-label">Total Earnings</div>
+            <div class="dash-card-value">$<span id="totalEarnings">0</span></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="dash-card-label">Pending Approvals</div>
+            <div class="dash-card-value" id="pendingApprovals">0</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon active"><i class="fas fa-check-circle"></i></div>
+            <div class="dash-card-label">Active Accounts</div>
+            <div class="dash-card-value" id="activeAccounts">0</div>
+          </div>
+        </div>
+
+        <div class="dash-section-card">
+          <div class="dash-section-header">
+            <h2><i class="fas fa-list"></i> My Submitted Accounts</h2>
+            <button class="btn btn-outline" onclick="loadMyAccounts()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div class="dash-section-body" style="padding: 0;">
+            <div class="table-container">
+              <table class="table" id="myAccountsTable">
+                <thead>
+                  <tr>
+                    <th>Account Name</th>
+                    <th>Email</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Rental Period</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Submit Account Tab -->
-      <div id="submission-tab" style="display: none;">
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Submit Account for Rent</h2>
+      <div id="submission-tab" class="hidden">
+        <div class="dash-section-card">
+          <div class="dash-section-header">
+            <h2><i class="fas fa-plus-circle"></i> Submit Account for Rent</h2>
           </div>
-          <form id="accountForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Account Name</label>
-                <input type="text" id="accountName" class="form-input" placeholder="e.g., My Business Account" required>
+          <div class="dash-section-body">
+            <form id="accountForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Account Name</label>
+                  <input type="text" id="accountName" class="form-input" placeholder="e.g., My Business Account" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contact Email</label>
+                  <input type="email" id="email" class="form-input" placeholder="contact@example.com" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Price per Day ($)</label>
+                  <input type="number" id="price" class="form-input" placeholder="25" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rental Days</label>
+                  <input type="number" id="rentalDays" class="form-input" placeholder="30" required>
+                </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Contact Email</label>
-                <input type="email" id="email" class="form-input" placeholder="contact@example.com" required>
+                <label class="form-label">Description</label>
+                <textarea id="description" class="form-textarea" placeholder="Describe your account, its connections, industry focus..."></textarea>
               </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Price per Day ($)</label>
-                <input type="number" id="price" class="form-input" placeholder="25" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Rental Days</label>
-                <input type="number" id="rentalDays" class="form-input" placeholder="30" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea id="description" class="form-textarea" placeholder="Describe your account, its connections, industry focus..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit Account</button>
-          </form>
-        </div>
-
-        <div class="card" style="margin-top: 20px;">
-          <div class="card-header">
-            <h2 class="card-title">My Submitted Accounts</h2>
-            <button class="btn btn-outline btn-small" onclick="loadMyAccounts()">Refresh</button>
-          </div>
-          <div class="table-container">
-            <table class="table" id="myAccountsTable">
-              <thead>
-                <tr>
-                  <th>Account Name</th>
-                  <th>Email</th>
-                  <th>Price</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Rental Period</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Account</button>
+            </form>
           </div>
         </div>
       </div>
 
       <!-- AI Chat Tab -->
-      <div id="aiChat-tab" style="display: none;">
+      <div id="aiChat-tab" class="hidden">
         <div class="chat-widget">
-          <div class="chat-header">AI Assistant</div>
+          <div class="chat-header">
+            <i class="fas fa-robot"></i> AI Assistant
+            <span style="margin-left: auto; font-size: 12px; opacity: 0.8;">Online</span>
+          </div>
           <div class="chat-body" id="aiChatBody">
+            <div class="chat-message ai">Hello! I'm your AI assistant. How can I help you today?</div>
           </div>
           <div class="chat-input">
             <input type="text" id="aiInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendAIChat()">
-            <button onclick="sendAIChat()">Send</button>
+            <button onclick="sendAIChat()"><i class="fas fa-paper-plane"></i></button>
           </div>
         </div>
       </div>
 
       <!-- Admin Chat Tab -->
-      <div id="adminChat-tab" style="display: none;">
+      <div id="adminChat-tab" class="hidden">
         <div class="chat-widget">
-          <div class="chat-header">Admin Chat</div>
+          <div class="chat-header">
+            <i class="fas fa-user-shield"></i> Admin Support
+            <span style="margin-left: auto; font-size: 12px; opacity: 0.8;">Online</span>
+          </div>
           <div class="chat-body" id="adminChatBody">
           </div>
           <div class="chat-input">
             <input type="text" id="adminChatInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendAdminChat()">
-            <button onclick="sendAdminChat()">Send</button>
+            <button onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   <script>
     let socket;
 
@@ -134,13 +643,16 @@
       document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
       document.querySelector(`.nav-tabs button[data-tab="${tab}"]`).classList.add('active');
       
-      document.querySelectorAll('.main-panel > div').forEach(div => div.style.display = 'none');
-      document.getElementById(`${tab}-tab`).style.display = 'block';
+      document.getElementById('dashboard-tab').classList.add('hidden');
+      document.getElementById('submission-tab').classList.add('hidden');
+      document.getElementById('aiChat-tab').classList.add('hidden');
+      document.getElementById('adminChat-tab').classList.add('hidden');
+      document.getElementById(`${tab}-tab`).classList.remove('hidden');
     }
 
     function toggleSettings() {
       const menu = document.getElementById('settingsMenu');
-      menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     }
 
     function toggleTheme() {
@@ -153,7 +665,6 @@
       });
     }
 
-    // AI Chat
     function sendAIChat() {
       const input = document.getElementById('aiInput');
       const text = input.value.trim();
@@ -163,12 +674,17 @@
       chatBody.innerHTML += `<div class="chat-message user">${text}</div>`;
       
       let botReply = '';
-      if (text.toLowerCase().includes('help') || text.toLowerCase().includes('support')) {
-        botReply = 'AI: Our support team can assist you. Please provide details.';
-      } else if (text.toLowerCase().includes('rent') || text.toLowerCase().includes('account')) {
-        botReply = 'AI: You can submit accounts for rent via the form above.';
+      const lower = text.toLowerCase();
+      if (lower.includes('help') || lower.includes('support')) {
+        botReply = 'AI: Our support team can assist you. Please provide details about your issue and we\'ll get back to you shortly.';
+      } else if (lower.includes('rent') || lower.includes('account')) {
+        botReply = 'AI: You can submit accounts for rent via the "Submit Account" tab. Make sure to provide accurate details for faster approval.';
+      } else if (lower.includes('price') || lower.includes('cost')) {
+        botReply = 'AI: Pricing depends on the LinkedIn account quality, connection count, and rental duration. Contact admin for custom quotes.';
+      } else if (lower.includes('status') || lower.includes('approve')) {
+        botReply = 'AI: You can check your account status in the Dashboard section. Pending accounts typically take 24-48 hours to review.';
       } else {
-        botReply = 'AI: Thanks for reaching out! How can I assist you today?';
+        botReply = 'AI: Thanks for reaching out! How can I assist you today? Feel free to ask about rentals, pricing, or account status.';
       }
       
       chatBody.innerHTML += `<div class="chat-message ai">${botReply}</div>`;
@@ -176,7 +692,6 @@
       input.value = '';
     }
 
-    // Admin Chat
     function sendAdminChat() {
       const input = document.getElementById('adminChatInput');
       const text = input.value.trim();
@@ -184,6 +699,11 @@
 
       const chatBody = document.getElementById('adminChatBody');
       chatBody.innerHTML += `<div class="chat-message user">${text}</div>`;
+      
+      if (socket) {
+        socket.emit('sendMessage', { text });
+      }
+      
       chatBody.innerHTML += `<div class="chat-message admin">Admin: Your message has been received. We will reply shortly.</div>`;
       chatBody.scrollTop = chatBody.scrollHeight;
       input.value = '';
@@ -218,29 +738,43 @@
         alert('Account submitted successfully!');
         document.getElementById('accountForm').reset();
         loadMyAccounts();
+        switchTab('dashboard');
       } else {
         alert(data.message);
       }
     });
 
     async function loadMyAccounts() {
-      const res = await apiFetch('/client/my-accounts');
-      const accounts = await res.json();
-      document.getElementById('totalRentals').textContent = accounts.filter(a => a.status === 'rented').length;
-      document.getElementById('pendingApprovals').textContent = accounts.filter(a => a.status === 'pending').length;
-      document.getElementById('activeAccounts').textContent = accounts.filter(a => a.status === 'approved' || a.status === 'rented').length;
-      
-      const tbody = document.querySelector('#myAccountsTable tbody');
-      tbody.innerHTML = accounts.map(a => `
-        <tr>
-          <td>${a.accountName}</td>
-          <td>${a.email}</td>
-          <td>$${a.price}</td>
-          <td>${a.description || '-'}</td>
-          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
-          <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'} to ${a.rentalEnd ? new Date(a.rentalEnd).toLocaleDateString() : '-'}</td>
-        </tr>
-      `).join('');
+      try {
+        const res = await apiFetch('/client/my-accounts');
+        const accounts = await res.json();
+        
+        const rented = accounts.filter(a => a.status === 'rented');
+        const totalEarnings = rented.reduce((sum, a) => sum + (a.price * (a.rentalDays || 0)), 0);
+        
+        document.getElementById('totalRentals').textContent = rented.length;
+        document.getElementById('totalEarnings').textContent = totalEarnings.toLocaleString();
+        document.getElementById('pendingApprovals').textContent = accounts.filter(a => a.status === 'pending').length;
+        document.getElementById('activeAccounts').textContent = accounts.filter(a => a.status === 'approved' || a.status === 'rented').length;
+        
+        const tbody = document.querySelector('#myAccountsTable tbody');
+        if (accounts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--dash-text-muted);">No accounts submitted yet</td></tr>';
+        } else {
+          tbody.innerHTML = accounts.map(a => `
+            <tr>
+              <td><strong>${a.accountName}</strong></td>
+              <td>${a.email}</td>
+              <td><strong>$${a.price}</strong>/day</td>
+              <td>${a.description || '-'}</td>
+              <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+              <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'} to ${a.rentalEnd ? new Date(a.rentalEnd).toLocaleDateString() : '-'}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading accounts:', err);
+      }
     }
 
     function initSocket() {
