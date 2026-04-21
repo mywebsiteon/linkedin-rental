@@ -444,7 +444,7 @@
         if (!res.ok) return;
 
         const data = await res.json();
-        window.location.href = data.role === 'admin' ? 'admin.html' : 'client.html';
+        window.location.href = data.role === 'admin' ? 'admin.html' : 'client-dashboard.html';
       } catch {
         // Keep the user on the login page when no session exists.
       }
@@ -467,7 +467,7 @@
         const data = await res.json();
 
         if (data.success) {
-          window.location.href = data.role === 'admin' ? 'admin.html' : 'client.html';
+          window.location.href = data.role === 'admin' ? 'admin.html' : 'client-dashboard.html';
         } else {
           errorAlert.textContent = data.message;
           errorAlert.classList.add('show');

@@ -1019,3 +1019,29 @@ body {
     font-size: 14px;
   }
 }
+
+/* Client Dashboard with Tabs */
+.dashboard-container { font-family: 'Segoe UI', sans-serif; }
+.dashboard-header {
+  display: flex; justify-content: space-between;
+  padding: 15px; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: sticky; top: 0; z-index: 10;
+}
+.user-menu { position: relative; }
+.settings-menu { position: absolute; top:35px; right:0; background:#fff; border:1px solid #ddd; border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:5px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.nav-tabs { display:flex; gap:10px; margin:10px 0; }
+.nav-tabs button { padding:8px 15px; border:none; border-radius:6px; cursor:pointer; background:#0077b5; color:#fff; }
+.nav-tabs button.active { background:#005f8d; }
+.main-panel { margin:10px auto; max-width:900px; min-height:400px; }
+.analytics-cards { display:flex; gap:15px; flex-wrap:wrap; }
+.dash-card { flex:1 1 45%; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); text-align:center; }
+.chat-widget { display:flex; flex-direction:column; height:400px; border:1px solid #ddd; border-radius:12px; overflow:hidden; }
+.chat-header { background:#0077b5; color:#fff; padding:12px; font-weight:bold; }
+.chat-body { flex:1; padding:10px; overflow-y:auto; background:#f9fbfc; }
+.chat-message.user { align-self:flex-end; background:#0077b5; color:#fff; padding:6px 10px; border-radius:8px; margin-bottom:5px; max-width:80%; }
+.chat-message.ai { align-self:flex-start; background:#e1e7f0; color:#333; padding:6px 10px; border-radius:8px; margin-bottom:5px; max-width:80%; }
+.chat-message.admin { align-self:flex-start; background:#ffc107; color:#333; padding:6px 10px; border-radius:8px; margin-bottom:5px; max-width:80%; }
+.chat-input { display:flex; border-top:1px solid #ddd; }
+.chat-input input { flex:1; padding:10px; border:none; }
+.chat-input button { padding:0 15px; border:none; background:#0077b5; color:#fff; cursor:pointer; font-weight:bold; }

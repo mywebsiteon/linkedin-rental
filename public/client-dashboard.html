@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard - LinkedRent</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="logo">LinkedRent</div>
+      <div class="user-menu">
+        <button onclick="toggleSettings()">⚙️ Settings</button>
+        <div class="settings-menu" id="settingsMenu" style="display: none;">
+          <button onclick="logout()">Logout</button>
+          <button onclick="toggleTheme()">Toggle Dark Mode</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+      <button data-tab="submission" onclick="switchTab('submission')">Submit Account</button>
+      <button data-tab="aiChat" onclick="switchTab('aiChat')">AI Chat</button>
+      <button data-tab="adminChat" onclick="switchTab('adminChat')">Admin Chat</button>
+    </div>
+
+    <!-- Main Panel -->
+    <div class="main-panel">
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab">
+        <div class="analytics-cards">
+          <div class="dash-card">Total Rentals: <span id="totalRentals">12</span></div>
+          <div class="dash-card">Total Earnings: $<span id="totalEarnings">350</span></div>
+          <div class="dash-card">Pending Approvals: <span id="pendingApprovals">2</span></div>
+          <div class="dash-card">Active Accounts: <span id="activeAccounts">5</span></div>
+        </div>
+      </div>
+
+      <!-- Submit Account Tab -->
+      <div id="submission-tab" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Submit Account for Rent</h2>
+          </div>
+          <form id="accountForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Account Name</label>
+                <input type="text" id="accountName" class="form-input" placeholder="e.g., My Business Account" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Email</label>
+                <input type="email" id="email" class="form-input" placeholder="contact@example.com" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Price per Day ($)</label>
+                <input type="number" id="price" class="form-input" placeholder="25" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rental Days</label>
+                <input type="number" id="rentalDays" class="form-input" placeholder="30" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea id="description" class="form-textarea" placeholder="Describe your account, its connections, industry focus..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Account</button>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h2 class="card-title">My Submitted Accounts</h2>
+            <button class="btn btn-outline btn-small" onclick="loadMyAccounts()">Refresh</button>
+          </div>
+          <div class="table-container">
+            <table class="table" id="myAccountsTable">
+              <thead>
+                <tr>
+                  <th>Account Name</th>
+                  <th>Email</th>
+                  <th>Price</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Rental Period</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Chat Tab -->
+      <div id="aiChat-tab" style="display: none;">
+        <div class="chat-widget">
+          <div class="chat-header">AI Assistant</div>
+          <div class="chat-body" id="aiChatBody">
+          </div>
+          <div class="chat-input">
+            <input type="text" id="aiInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendAIChat()">
+            <button onclick="sendAIChat()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Chat Tab -->
+      <div id="adminChat-tab" style="display: none;">
+        <div class="chat-widget">
+          <div class="chat-header">Admin Chat</div>
+          <div class="chat-body" id="adminChatBody">
+          </div>
+          <div class="chat-input">
+            <input type="text" id="adminChatInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendAdminChat()">
+            <button onclick="sendAdminChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let socket;
+
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.nav-tabs button[data-tab="${tab}"]`).classList.add('active');
+      
+      document.querySelectorAll('.main-panel > div').forEach(div => div.style.display = 'none');
+      document.getElementById(`${tab}-tab`).style.display = 'block';
+    }
+
+    function toggleSettings() {
+      const menu = document.getElementById('settingsMenu');
+      menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function logout() {
+      fetch('/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => {
+        window.location.href = 'login.html';
+      });
+    }
+
+    // AI Chat
+    function sendAIChat() {
+      const input = document.getElementById('aiInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatBody = document.getElementById('aiChatBody');
+      chatBody.innerHTML += `<div class="chat-message user">${text}</div>`;
+      
+      let botReply = '';
+      if (text.toLowerCase().includes('help') || text.toLowerCase().includes('support')) {
+        botReply = 'AI: Our support team can assist you. Please provide details.';
+      } else if (text.toLowerCase().includes('rent') || text.toLowerCase().includes('account')) {
+        botReply = 'AI: You can submit accounts for rent via the form above.';
+      } else {
+        botReply = 'AI: Thanks for reaching out! How can I assist you today?';
+      }
+      
+      chatBody.innerHTML += `<div class="chat-message ai">${botReply}</div>`;
+      chatBody.scrollTop = chatBody.scrollHeight;
+      input.value = '';
+    }
+
+    // Admin Chat
+    function sendAdminChat() {
+      const input = document.getElementById('adminChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatBody = document.getElementById('adminChatBody');
+      chatBody.innerHTML += `<div class="chat-message user">${text}</div>`;
+      chatBody.innerHTML += `<div class="chat-message admin">Admin: Your message has been received. We will reply shortly.</div>`;
+      chatBody.scrollTop = chatBody.scrollHeight;
+      input.value = '';
+    }
+
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        credentials: 'same-origin',
+        headers: { ...(options.headers || {}) }
+      });
+      if (response.status === 401) { window.location.href = 'login.html'; throw new Error('Auth required'); }
+      if (response.status === 403) { window.location.href = 'admin.html'; throw new Error('Admin access required'); }
+      return response;
+    }
+
+    document.getElementById('accountForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await apiFetch('/submit-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountName: document.getElementById('accountName').value,
+          email: document.getElementById('email').value,
+          price: document.getElementById('price').value,
+          rentalDays: document.getElementById('rentalDays').value,
+          description: document.getElementById('description').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Account submitted successfully!');
+        document.getElementById('accountForm').reset();
+        loadMyAccounts();
+      } else {
+        alert(data.message);
+      }
+    });
+
+    async function loadMyAccounts() {
+      const res = await apiFetch('/client/my-accounts');
+      const accounts = await res.json();
+      document.getElementById('totalRentals').textContent = accounts.filter(a => a.status === 'rented').length;
+      document.getElementById('pendingApprovals').textContent = accounts.filter(a => a.status === 'pending').length;
+      document.getElementById('activeAccounts').textContent = accounts.filter(a => a.status === 'approved' || a.status === 'rented').length;
+      
+      const tbody = document.querySelector('#myAccountsTable tbody');
+      tbody.innerHTML = accounts.map(a => `
+        <tr>
+          <td>${a.accountName}</td>
+          <td>${a.email}</td>
+          <td>$${a.price}</td>
+          <td>${a.description || '-'}</td>
+          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+          <td>${a.rentalStart ? new Date(a.rentalStart).toLocaleDateString() : '-'} to ${a.rentalEnd ? new Date(a.rentalEnd).toLocaleDateString() : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function initSocket() {
+      socket = io();
+      socket.on('receiveMessage', msg => {
+        if (msg.sender === 'admin') {
+          const chatBody = document.getElementById('adminChatBody');
+          chatBody.innerHTML += `<div class="chat-message admin">Admin: ${msg.text}</div>`;
+          chatBody.scrollTop = chatBody.scrollHeight;
+        }
+      });
+    }
+
+    async function initPage() {
+      try {
+        await apiFetch('/me');
+        await loadMyAccounts();
+        initSocket();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.user-menu')) {
+        document.getElementById('settingsMenu').style.display = 'none';
+      }
+    });
+
+    initPage();
+  </script>
+</body>
+</html>
