@@ -18,28 +18,108 @@
       color: white;
       padding: 80px 24px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+      pointer-events: none;
     }
     .hero h1 {
-      font-size: 48px;
+      font-size: 52px;
       margin-bottom: 20px;
       color: white;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
     }
     .hero p {
       font-size: 20px;
       opacity: 0.9;
       max-width: 600px;
       margin: 0 auto 32px;
+      position: relative;
+      z-index: 1;
     }
     .hero-buttons {
       display: flex;
       gap: 16px;
       justify-content: center;
+      position: relative;
+      z-index: 1;
     }
     .hero .btn {
       padding: 16px 32px;
     }
-    .features {
+
+    /* Stats Section */
+    .stats-section {
+      background: white;
       padding: 60px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-grid-hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      text-align: center;
+    }
+    .stat-item h3 {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .stat-item p {
+      color: var(--text-medium);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    /* Trust Badges */
+    .trust-section {
+      background: var(--bg-body);
+      padding: 40px 24px;
+    }
+    .trust-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-medium);
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .trust-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 24px;
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -51,35 +131,279 @@
     }
     .feature-card {
       background: var(--bg-card);
-      border-radius: 8px;
-      padding: 32px;
+      border-radius: 16px;
+      padding: 40px 32px;
       box-shadow: var(--shadow);
       text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid var(--border);
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
     .feature-icon {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       background: var(--primary-light);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 28px;
+      margin: 0 auto 24px;
+      font-size: 32px;
     }
     .feature-card h3 {
       margin-bottom: 12px;
+      font-size: 20px;
+      font-weight: 700;
     }
     .feature-card p {
       color: var(--text-medium);
+      line-height: 1.6;
     }
+
+    /* Testimonials */
+    .testimonials {
+      background: linear-gradient(135deg, #f8fafc 0%, #eef3f8 100%);
+      padding: 80px 24px;
+    }
+    .testimonials-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .testimonials h2 {
+      text-align: center;
+      margin-bottom: 48px;
+      font-size: 36px;
+      font-weight: 800;
+    }
+    .testimonials-carousel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .testimonial-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: transform 0.3s;
+    }
+    .testimonial-card:hover {
+      transform: translateY(-4px);
+    }
+    .testimonial-stars {
+      color: #f59e0b;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .testimonial-text {
+      color: var(--text-dark);
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .testimonial-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .testimonial-info h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .testimonial-info span {
+      font-size: 14px;
+      color: var(--text-medium);
+    }
+
+    /* Activity Feed */
+    .activity-section {
+      background: white;
+      padding: 60px 24px;
+    }
+    .activity-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .activity-section h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 32px;
+    }
+    .activity-feed {
+      background: var(--bg-body);
+      border-radius: 16px;
+      padding: 24px;
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      animation: slideIn 0.4s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .activity-icon.rental { background: #dcfce7; }
+    .activity-icon.review { background: #fef3c7; }
+    .activity-text {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text-dark);
+    }
+    .activity-time {
+      font-size: 13px;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+
+    /* Newsletter */
+    .newsletter {
+      background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+      color: white;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .newsletter h2 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: white;
+    }
+    .newsletter p {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 32px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .newsletter-form {
+      display: flex;
+      gap: 12px;
+      max-width: 500px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .newsletter-form input {
+      flex: 1;
+      min-width: 250px;
+      padding: 16px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    .newsletter-form button {
+      padding: 16px 32px;
+      background: white;
+      color: var(--primary);
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .newsletter-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    /* Partner Logos */
+    .partners {
+      background: var(--bg-body);
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .partners p {
+      color: var(--text-light);
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+    .partners-grid {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .partner-logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-light);
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .partner-logo:hover {
+      opacity: 1;
+    }
+
     .cta {
       background: var(--primary-light);
-      padding: 60px 24px;
+      padding: 80px 24px;
       text-align: center;
     }
     .cta h2 {
       margin-bottom: 20px;
+      font-size: 36px;
+      font-weight: 800;
+    }
+    .cta p {
+      margin-bottom: 32px;
+      color: var(--text-medium);
+      font-size: 18px;
+    }
+
+    @media (max-width: 968px) {
+      .stats-grid-hero { grid-template-columns: repeat(2, 1fr); }
+      .hero h1 { font-size: 36px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid-hero { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 28px; }
+      .testimonials-carousel { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -106,8 +430,56 @@
     </div>
   </section>
 
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-grid-hero">
+      <div class="stat-item">
+        <h3 id="statAccounts">0</h3>
+        <p>Accounts Listed</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="statRented">0</h3>
+        <p>Successful Rentals</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="statUsers">0</h3>
+        <p>Happy Clients</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="statRating">0.0</h3>
+        <p>Average Rating</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges -->
+  <section class="trust-section">
+    <div class="trust-grid">
+      <div class="trust-item">
+        <div class="trust-icon">🔒</div>
+        <span>Secure Transactions</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">✓</div>
+        <span>Verified Accounts</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">🛡️</div>
+        <span>Money-Back Guarantee</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">⚡</div>
+        <span>Instant Access</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">💬</div>
+        <span>24/7 Support</span>
+      </div>
+    </div>
+  </section>
+
   <section class="features">
-    <h2 style="text-align: center;">Why Choose LinkedRent?</h2>
+    <h2 style="text-align: center; font-size: 36px; font-weight: 800;">Why Choose LinkedRent?</h2>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">✓</div>
@@ -142,18 +514,265 @@
     </div>
   </section>
 
+  <!-- Testimonials -->
+  <section class="testimonials">
+    <div class="testimonials-container">
+      <h2>What Our Clients Say</h2>
+      <div class="testimonials-carousel" id="testimonialsContainer">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Activity Feed -->
+  <section class="activity-section">
+    <div class="activity-container">
+      <h2>Live Activity</h2>
+      <div class="activity-feed" id="activityFeed">
+        <div style="text-align: center; color: var(--text-light); padding: 40px;">Loading activity...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <h2>Stay Updated</h2>
+    <p>Get the latest updates on new accounts, features, and exclusive deals.</p>
+    <form class="newsletter-form" id="newsletterForm">
+      <input type="email" id="newsletterEmail" placeholder="Enter your email address" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <p id="newsletterMsg" style="margin-top: 16px; font-size: 14px; opacity: 0; transition: opacity 0.3s;"></p>
+  </section>
+
+  <!-- Partner Logos -->
+  <section class="partners">
+    <p>Trusted by professionals from leading companies</p>
+    <div class="partners-grid">
+      <div class="partner-logo">Google</div>
+      <div class="partner-logo">Microsoft</div>
+      <div class="partner-logo">Amazon</div>
+      <div class="partner-logo">Meta</div>
+      <div class="partner-logo">Salesforce</div>
+      <div class="partner-logo">HubSpot</div>
+    </div>
+  </section>
+
   <section class="cta">
     <h2>Ready to Get Started?</h2>
-    <p style="margin-bottom: 24px; color: var(--text-medium);">Join thousands of professionals growing their network today.</p>
+    <p style="margin-bottom: 32px; color: var(--text-medium);">Join thousands of professionals growing their network today.</p>
     <a href="register.html" class="btn btn-primary">Create Free Account</a>
   </section>
 
-  <footer style="background: #191919; color: white; padding: 40px 24px; text-align: center;">
-    <div style="margin-bottom: 16px;">
-      <a href="terms.html" style="color: white; text-decoration: none; margin: 0 12px;">Terms</a>
-      <a href="privacy.html" style="color: white; text-decoration: none; margin: 0 12px;">Privacy</a>
+  <footer style="background: #191919; color: white; padding: 60px 24px 40px;">
+    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px;">
+      <div>
+        <div class="logo" style="color: white; margin-bottom: 16px;">
+          <span class="logo-icon" style="background: var(--primary);">in</span>
+          LinkedRent
+        </div>
+        <p style="opacity: 0.7; font-size: 14px; line-height: 1.6;">The most trusted platform for renting verified LinkedIn accounts to grow your business network.</p>
+      </div>
+      <div>
+        <h4 style="margin-bottom: 16px; font-size: 16px;">Platform</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a href="login.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">Login</a>
+          <a href="register.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">Register</a>
+          <a href="faq.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">FAQ</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="margin-bottom: 16px; font-size: 16px;">Legal</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a href="terms.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">Terms</a>
+          <a href="privacy.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">Privacy</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="margin-bottom: 16px; font-size: 16px;">Contact</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a href="mailto:support@linkedrent.com" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">support@linkedrent.com</a>
+        </div>
+      </div>
     </div>
-    <p style="opacity: 0.7;">&copy; 2026 LinkedRent. All rights reserved.</p>
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; text-align: center;">
+      <p style="opacity: 0.7; font-size: 14px;">&copy; 2026 LinkedRent. All rights reserved.</p>
+    </div>
   </footer>
+
+  <script>
+    // Load stats
+    async function loadStats() {
+      try {
+        const res = await fetch('/stats');
+        const data = await res.json();
+        if (data.success) {
+          animateNumber('statAccounts', data.stats.totalAccounts);
+          animateNumber('statRented', data.stats.rentedAccounts);
+          animateNumber('statUsers', data.stats.totalUsers);
+          document.getElementById('statRating').textContent = data.stats.avgRating;
+        }
+      } catch (e) {
+        console.error('Failed to load stats');
+      }
+    }
+
+    function animateNumber(id, target) {
+      const el = document.getElementById(id);
+      const duration = 1500;
+      const start = 0;
+      const startTime = performance.now();
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(start + (target - start) * ease);
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    // Load testimonials
+    async function loadTestimonials() {
+      try {
+        const res = await fetch('/reviews');
+        const data = await res.json();
+        const container = document.getElementById('testimonialsContainer');
+        
+        if (data.reviews && data.reviews.length > 0) {
+          container.innerHTML = data.reviews.slice(0, 6).map(r => `
+            <div class="testimonial-card">
+              <div class="testimonial-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+              <p class="testimonial-text">"${r.text}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">${(r.userName || 'U')[0].toUpperCase()}</div>
+                <div class="testimonial-info">
+                  <h4>${r.userName || 'Anonymous'}</h4>
+                  <span>Verified Client</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          // Fallback testimonials
+          container.innerHTML = `
+            <div class="testimonial-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"LinkedRent helped me grow my B2B leads by 300% in just two months. The account quality is exceptional."</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">JD</div>
+                <div class="testimonial-info">
+                  <h4>James Davidson</h4>
+                  <span>Marketing Director</span>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"The verification process gives me peace of mind. Every account I've rented has been authentic and active."</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">SM</div>
+                <div class="testimonial-info">
+                  <h4>Sarah Mitchell</h4>
+                  <span>Sales Manager</span>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"Instant access and great support team. This platform is a game-changer for my outreach campaigns."</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">RK</div>
+                <div class="testimonial-info">
+                  <h4>Robert Kim</h4>
+                  <span>Business Owner</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error('Failed to load testimonials');
+      }
+    }
+
+    // Load activity feed
+    async function loadActivity() {
+      try {
+        const res = await fetch('/activity');
+        const data = await res.json();
+        const feed = document.getElementById('activityFeed');
+        
+        if (data.activities && data.activities.length > 0) {
+          feed.innerHTML = data.activities.map(a => `
+            <div class="activity-item">
+              <div class="activity-icon ${a.type}">${a.type === 'rental' ? '🤝' : '⭐'}</div>
+              <span class="activity-text">${a.text}</span>
+              <span class="activity-time">${formatTime(a.time)}</span>
+            </div>
+          `).join('');
+        } else {
+          feed.innerHTML = `
+            <div class="activity-item">
+              <div class="activity-icon rental">🤝</div>
+              <span class="activity-text">Premium Business Account was rented</span>
+              <span class="activity-time">Just now</span>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon review">⭐</div>
+              <span class="activity-text">James left a 5-star review</span>
+              <span class="activity-time">5m ago</span>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon rental">🤝</div>
+              <span class="activity-text">Tech Industry Pro account was rented</span>
+              <span class="activity-time">12m ago</span>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error('Failed to load activity');
+      }
+    }
+
+    function formatTime(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = now - date;
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+      return date.toLocaleDateString();
+    }
+
+    // Newsletter form
+    document.getElementById('newsletterForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('newsletterEmail').value;
+      const msg = document.getElementById('newsletterMsg');
+      
+      try {
+        const res = await fetch('/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        msg.textContent = data.message;
+        msg.style.opacity = '1';
+        msg.style.color = data.success ? '#86efac' : '#fca5a5';
+        if (data.success) document.getElementById('newsletterEmail').value = '';
+      } catch (e) {
+        msg.textContent = 'An error occurred. Please try again.';
+        msg.style.opacity = '1';
+        msg.style.color = '#fca5a5';
+      }
+    });
+
+    loadStats();
+    loadTestimonials();
+    loadActivity();
+  </script>
 </body>
 </html>

@@ -25,6 +25,9 @@ const io = socketio(server, {
 const User = require('./models/User');
 const Account = require('./models/Account');
 const Message = require('./models/Message');
+const Review = require('./models/Review');
+const Contact = require('./models/Contact');
+const Newsletter = require('./models/Newsletter');
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
@@ -353,6 +356,176 @@ io.on('connection', (socket) => {
 app.get('/messages', requireAuth, async (req, res) => {
   const messages = await Message.find().sort({ timestamp: -1 }).limit(100);
   res.send({ success: true, messages });
+});
+
+// Reviews
+app.post('/reviews', requireAuth, async (req, res) => {
+  const { accountId, rating, text } = req.body;
+  if (!rating || !text) {
+    return res.status(400).send({ success: false, message: 'Rating and text required' });
+  }
+  const review = new Review({
+    userId: req.user.id,
+    userName: req.user.name,
+    accountId,
+    rating: parseInt(rating, 10),
+    text
+  });
+  await review.save();
+  res.send({ success: true, message: 'Review submitted for approval' });
+});
+
+app.get('/reviews', async (req, res) => {
+  const reviews = await Review.find({ isApproved: true }).sort({ createdAt: -1 }).limit(20);
+  res.send({ success: true, reviews });
+});
+
+app.get('/admin/reviews', requireAuth, requireAdmin, async (req, res) => {
+  const reviews = await Review.find().sort({ createdAt: -1 }).populate('userId', 'name email');
+  res.send({ success: true, reviews });
+});
+
+app.post('/admin/reviews/:reviewId/approve', requireAuth, requireAdmin, async (req, res) => {
+  const { reviewId } = req.params;
+  const review = await Review.findById(reviewId);
+  if (!review) return res.status(404).send({ success: false, message: 'Review not found' });
+  review.isApproved = !review.isApproved;
+  await review.save();
+  res.send({ success: true, isApproved: review.isApproved });
+});
+
+app.delete('/admin/reviews/:reviewId', requireAuth, requireAdmin, async (req, res) => {
+  await Review.findByIdAndDelete(req.params.reviewId);
+  res.send({ success: true, message: 'Review deleted' });
+});
+
+// Contact
+app.post('/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+  if (!name || !email || !message) {
+    return res.status(400).send({ success: false, message: 'Name, email and message required' });
+  }
+  const contact = new Contact({ name, email, subject, message });
+  await contact.save();
+  res.send({ success: true, message: 'Message sent successfully' });
+});
+
+app.get('/admin/contacts', requireAuth, requireAdmin, async (req, res) => {
+  const contacts = await Contact.find().sort({ createdAt: -1 });
+  res.send({ success: true, contacts });
+});
+
+app.post('/admin/contacts/:contactId/status', requireAuth, requireAdmin, async (req, res) => {
+  const { status } = req.body;
+  const contact = await Contact.findByIdAndUpdate(req.params.contactId, { status }, { new: true });
+  res.send({ success: true, contact });
+});
+
+// Newsletter
+app.post('/newsletter', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send({ success: false, message: 'Email required' });
+  try {
+    const subscriber = new Newsletter({ email });
+    await subscriber.save();
+    res.send({ success: true, message: 'Subscribed successfully' });
+  } catch (err) {
+    res.status(400).send({ success: false, message: 'Already subscribed' });
+  }
+});
+
+app.get('/admin/newsletter', requireAuth, requireAdmin, async (req, res) => {
+  const subscribers = await Newsletter.find().sort({ createdAt: -1 });
+  res.send({ success: true, subscribers });
+});
+
+// Search & Filter Accounts
+app.get('/client/available-accounts', async (req, res) => {
+  const { search, minPrice, maxPrice, category, sort } = req.query;
+  let query = { status: 'approved' };
+  
+  if (search) {
+    query.$or = [
+      { accountName: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } }
+    ];
+  }
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = parseFloat(minPrice);
+    if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+  }
+  if (category) {
+    query.category = category;
+  }
+  
+  let sortOption = {};
+  if (sort === 'price_asc') sortOption.price = 1;
+  else if (sort === 'price_desc') sortOption.price = -1;
+  else if (sort === 'newest') sortOption.createdAt = -1;
+  else sortOption.createdAt = -1;
+  
+  const accounts = await Account.find(query).populate('userId', 'name email').sort(sortOption);
+  res.send(accounts);
+});
+
+// Stats for homepage
+app.get('/stats', async (req, res) => {
+  const totalAccounts = await Account.countDocuments();
+  const rentedAccounts = await Account.countDocuments({ status: 'rented' });
+  const totalUsers = await User.countDocuments();
+  const totalReviews = await Review.countDocuments({ isApproved: true });
+  const avgRating = await Review.aggregate([
+    { $match: { isApproved: true } },
+    { $group: { _id: null, avg: { $avg: '$rating' } } }
+  ]);
+  
+  res.send({
+    success: true,
+    stats: {
+      totalAccounts,
+      rentedAccounts,
+      totalUsers,
+      totalReviews,
+      avgRating: avgRating[0]?.avg ? avgRating[0].avg.toFixed(1) : 0
+    }
+  });
+});
+
+// Activity feed
+app.get('/activity', async (req, res) => {
+  const recentRentals = await Account.find({ status: 'rented' })
+    .sort({ updatedAt: -1 })
+    .limit(5)
+    .populate('userId', 'name')
+    .select('accountName price updatedAt');
+  
+  const recentReviews = await Review.find({ isApproved: true })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select('userName rating text createdAt');
+  
+  res.send({
+    success: true,
+    activities: [
+      ...recentRentals.map(r => ({
+        type: 'rental',
+        text: `${r.accountName} was rented`,
+        time: r.updatedAt
+      })),
+      ...recentReviews.map(r => ({
+        type: 'review',
+        text: `${r.userName} left a ${r.rating}-star review`,
+        time: r.createdAt
+      }))
+    ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8)
+  });
+});
+
+// Notifications
+app.get('/notifications', requireAuth, async (req, res) => {
+  const user = await User.findById(req.user.id);
+  res.send({ success: true, notifications: user.notifications || [] });
 });
 
 const PORT = process.env.PORT || 3000;

@@ -403,14 +403,6 @@
       border-bottom-right-radius: 4px;
     }
 
-    .chat-message.ai {
-      align-self: flex-start;
-      background: white;
-      color: var(--dash-text);
-      border: 1px solid var(--dash-border);
-      border-bottom-left-radius: 4px;
-    }
-
     .chat-message.admin {
       align-self: flex-start;
       background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
@@ -501,9 +493,6 @@
       </button>
       <button data-tab="submission" onclick="switchTab('submission')">
         <i class="fas fa-plus-circle"></i> Submit Account
-      </button>
-      <button data-tab="aiChat" onclick="switchTab('aiChat')">
-        <i class="fas fa-robot"></i> AI Chat
       </button>
       <button data-tab="adminChat" onclick="switchTab('adminChat')">
         <i class="fas fa-user-shield"></i> Admin Chat
@@ -600,23 +589,6 @@
         </div>
       </div>
 
-      <!-- AI Chat Tab -->
-      <div id="aiChat-tab" class="hidden">
-        <div class="chat-widget">
-          <div class="chat-header">
-            <i class="fas fa-robot"></i> AI Assistant
-            <span style="margin-left: auto; font-size: 12px; opacity: 0.8;">Online</span>
-          </div>
-          <div class="chat-body" id="aiChatBody">
-            <div class="chat-message ai">Hello! I'm your AI assistant. How can I help you today?</div>
-          </div>
-          <div class="chat-input">
-            <input type="text" id="aiInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendAIChat()">
-            <button onclick="sendAIChat()"><i class="fas fa-paper-plane"></i></button>
-          </div>
-        </div>
-      </div>
-
       <!-- Admin Chat Tab -->
       <div id="adminChat-tab" class="hidden">
         <div class="chat-widget">
@@ -645,7 +617,6 @@
       
       document.getElementById('dashboard-tab').classList.add('hidden');
       document.getElementById('submission-tab').classList.add('hidden');
-      document.getElementById('aiChat-tab').classList.add('hidden');
       document.getElementById('adminChat-tab').classList.add('hidden');
       document.getElementById(`${tab}-tab`).classList.remove('hidden');
     }
@@ -663,33 +634,6 @@
       fetch('/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => {
         window.location.href = 'login.html';
       });
-    }
-
-    function sendAIChat() {
-      const input = document.getElementById('aiInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const chatBody = document.getElementById('aiChatBody');
-      chatBody.innerHTML += `<div class="chat-message user">${text}</div>`;
-      
-      let botReply = '';
-      const lower = text.toLowerCase();
-      if (lower.includes('help') || lower.includes('support')) {
-        botReply = 'AI: Our support team can assist you. Please provide details about your issue and we\'ll get back to you shortly.';
-      } else if (lower.includes('rent') || lower.includes('account')) {
-        botReply = 'AI: You can submit accounts for rent via the "Submit Account" tab. Make sure to provide accurate details for faster approval.';
-      } else if (lower.includes('price') || lower.includes('cost')) {
-        botReply = 'AI: Pricing depends on the LinkedIn account quality, connection count, and rental duration. Contact admin for custom quotes.';
-      } else if (lower.includes('status') || lower.includes('approve')) {
-        botReply = 'AI: You can check your account status in the Dashboard section. Pending accounts typically take 24-48 hours to review.';
-      } else {
-        botReply = 'AI: Thanks for reaching out! How can I assist you today? Feel free to ask about rentals, pricing, or account status.';
-      }
-      
-      chatBody.innerHTML += `<div class="chat-message ai">${botReply}</div>`;
-      chatBody.scrollTop = chatBody.scrollHeight;
-      input.value = '';
     }
 
     function sendAdminChat() {
